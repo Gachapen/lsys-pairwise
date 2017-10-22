@@ -19,7 +19,13 @@ export default {
 </script>
 
 <style scoped lang="sass">
-.video-pair
-  >video
-    margin: 10px
+.pairwise
+  width: 100%
+  height: 100%
+  padding-top: 60px
+  background-color: rgb(127, 127, 127)
+
+  >.video-pair
+    >video
+      margin: 10px
 </style>
