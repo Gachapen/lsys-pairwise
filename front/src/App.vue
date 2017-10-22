@@ -1,16 +1,16 @@
 <template>
   <div id="app">
-    <HelloWorld/>
+    <Pairwise/>
   </div>
 </template>
 
 <script>
-import HelloWorld from './components/HelloWorld'
+import Pairwise from './components/Pairwise'
 
 export default {
   name: 'app',
   components: {
-    HelloWorld
+    Pairwise
   }
 }
 </script>
