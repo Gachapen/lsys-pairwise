@@ -10,8 +10,8 @@ import Pairwise from './components/Pairwise'
 export default {
   name: 'app',
   components: {
-    Pairwise
-  }
+    Pairwise,
+  },
 }
 </script>
 
