@@ -2,7 +2,9 @@ use bson::{from_bson, to_bson, Bson};
 use mongodb::{self, ThreadedClient};
 use mongodb::db::ThreadedDatabase;
 use rocket::{Route, State};
+use rocket::response::NamedFile;
 use rocket_contrib::json::Json;
+use std::path::{Path, PathBuf};
 
 use db;
 use model::Gender;
@@ -25,7 +27,7 @@ impl From<User> for db::User {
 
 /// Get all of the routes
 pub fn routes() -> Vec<Route> {
-    routes![index, post_user, get_task]
+    routes![index, post_user, get_task, get_video]
 }
 
 #[get("/")]
@@ -96,4 +98,9 @@ fn get_task(db_client: State<mongodb::Client>) -> Result<Json<Vec<Pair>>, Json> 
     assert_eq!(num_pairs, pairs.len());
 
     Ok(Json(pairs))
+}
+
+#[get("/video/<file..>")]
+fn get_video(file: PathBuf) -> Option<NamedFile> {
+    NamedFile::open(Path::new("video/").join(file)).ok()
 }
