@@ -1,4 +1,4 @@
-use bson::to_bson;
+use bson::{from_bson, to_bson, Bson};
 use mongodb::{self, ThreadedClient};
 use mongodb::db::ThreadedDatabase;
 use rocket::{Route, State};
@@ -25,7 +25,7 @@ impl From<User> for db::User {
 
 /// Get all of the routes
 pub fn routes() -> Vec<Route> {
-    routes![index, post_user]
+    routes![index, post_user, get_task]
 }
 
 #[get("/")]
@@ -56,4 +56,44 @@ fn post_user(user: Json<User>, db_client: State<mongodb::Client>) -> Result<Json
     let token = format!("{}", Uuid::new_v4().simple());
 
     Ok(Json(json!({ "token": token })))
+}
+
+#[derive(Serialize)]
+struct Pair {
+    a: String,
+    b: String,
+}
+
+#[get("/task")]
+fn get_task(db_client: State<mongodb::Client>) -> Result<Json<Vec<Pair>>, Json> {
+    let sample_cursor = db_client
+        .db(db::NAME)
+        .collection(db::COLLECTION_SAMPLE)
+        .find(None, None)
+        .expect("Failed retrieving samples");
+
+    let documents: Result<Vec<_>, _> = sample_cursor.collect();
+    let documents = documents.expect("Failed retrieveing sample documents");
+
+    let samples: Result<Vec<db::Sample>, _> = documents
+        .iter()
+        .map(|doc| from_bson(Bson::from(doc.clone())))
+        .collect();
+    let samples = samples.expect("Failed deserializing documents");
+
+    let num_samples = samples.len();
+    let num_pairs = (num_samples * (num_samples - 1)) / 2;
+    let mut pairs = Vec::with_capacity(num_pairs);
+    for (i, sample_a) in samples.iter().enumerate() {
+        for sample_b in samples.iter().skip(i + 1) {
+            pairs.push(Pair {
+                a: sample_a.name.clone(),
+                b: sample_b.name.clone(),
+            });
+        }
+    }
+
+    assert_eq!(num_pairs, pairs.len());
+
+    Ok(Json(pairs))
 }

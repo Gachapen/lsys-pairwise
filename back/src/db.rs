@@ -8,7 +8,7 @@ pub const NAME: &'static str = "lsys-pairwise";
 pub const COLLECTION_SAMPLE: &'static str = "sample";
 pub const COLLECTION_USER: &'static str = "user";
 
-#[derive(Serialize)]
+#[derive(Serialize, Deserialize)]
 pub struct Sample {
     pub name: String,
 }
