@@ -10,10 +10,12 @@ extern crate rocket_contrib;
 extern crate rocket_cors;
 #[macro_use]
 extern crate serde_derive;
+extern crate uuid;
 
 mod cfg;
 mod routes;
 mod db;
+mod model;
 
 use bson::to_bson;
 use mongodb::ThreadedClient;
