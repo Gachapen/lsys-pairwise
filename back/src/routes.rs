@@ -1,6 +1,8 @@
 use bson::{from_bson, to_bson, Bson};
 use mongodb::{self, ThreadedClient};
 use mongodb::db::ThreadedDatabase;
+use rand::{thread_rng, Rng};
+use rand::distributions::{IndependentSample, Range};
 use rocket::{Route, State};
 use rocket::response::NamedFile;
 use rocket_contrib::json::Json;
@@ -96,6 +98,28 @@ fn get_task(db_client: State<mongodb::Client>) -> Result<Json<Vec<Pair>>, Json> 
     }
 
     assert_eq!(num_pairs, pairs.len());
+
+    let chance_range = Range::new(0.0, 1.0);
+    let mut rng = thread_rng();
+
+    // Randomize pairings
+    pairs = pairs
+        .into_iter()
+        .map(|pair| {
+            let chance = chance_range.ind_sample(&mut rng);
+            if chance > 0.5 {
+                Pair {
+                    a: pair.b,
+                    b: pair.a,
+                }
+            } else {
+                pair
+            }
+        })
+        .collect();
+
+    // Randomize pair ordering
+    rng.shuffle(&mut pairs);
 
     Ok(Json(pairs))
 }

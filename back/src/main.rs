@@ -4,6 +4,7 @@
 #[macro_use]
 extern crate bson;
 extern crate mongodb;
+extern crate rand;
 extern crate rocket;
 #[macro_use]
 extern crate rocket_contrib;
