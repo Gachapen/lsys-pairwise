@@ -2,11 +2,8 @@
   .comparison-slider
     template(v-for='point in points')
       label
-        input(type='radio' :name='equal')
+        input(type='radio' :name='equal' :value='point.weight' v-model='weight')
         | {{ point.label }}
-    //- .point(v-for='point in points')
-    //-   .shape
-    //-   .label {{ point.label }}
 </template>
 
 <script>
@@ -23,6 +20,7 @@ export default {
   },
   data () {
     return {
+      weight: undefined,
     }
   },
   computed: {
@@ -65,6 +63,11 @@ export default {
           label: `Extremely ${this.more}`,
         },
       ]
+    },
+  },
+  watch: {
+    weight (val) {
+      this.$emit('update:weight', val)
     },
   },
 }

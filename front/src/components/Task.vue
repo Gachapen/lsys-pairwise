@@ -1,13 +1,13 @@
 <template lang="pug">
   .pairwise
-    component(is='comparison', :pair='currentPair', :key='pairId')
-    button.next(@click='next') Next
+    component(is='comparison' :pair='currentPair' :key='pairId' :realistic.sync='realistic' :pleasing.sync='pleasing')
+    button.next(@click='next' :disabled='!canContinue') Next
 </template>
 
 <script>
 import Comparison from './Comparison'
 import { API_BASE } from '../config'
-import { get } from 'axios'
+import axios, { get, post } from 'axios'
 
 export default {
   components: {
@@ -23,6 +23,8 @@ export default {
     return {
       pairs: [],
       pairIndex: 0,
+      realistic: undefined,
+      pleasing: undefined,
     }
   },
   computed: {
@@ -39,10 +41,31 @@ export default {
     pairId () {
       return `${this.currentPair.a} ${this.currentPair.b}`
     },
+    canContinue () {
+      return this.realistic && this.pleasing
+    },
   },
   methods: {
+    postWeight (metric, weight) {
+      return post(`${API_BASE}/weight`, {
+        token: this.token,
+        metric,
+        a: this.currentPair.a,
+        b: this.currentPair.b,
+        weight,
+      })
+    },
     next () {
-      this.pairIndex += 1
+      axios.all([
+        this.postWeight('realistic', this.realistic),
+        this.postWeight('pleasing', this.pleasing),
+      ])
+        .then(() => {
+          this.pairIndex += 1
+          this.realistic = undefined
+          this.pleasing = undefined
+        })
+        .catch(error => console.error('Failed posting weights', error))
     },
   },
   created () {

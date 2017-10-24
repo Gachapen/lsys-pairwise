@@ -7,8 +7,8 @@
       video(autoplay loop ref='videoB')
         source(v-if='srcB' :src='srcB' type='video/mp4')
         | Can't play video; your browser doesn't support HTML5 video in WebM with VP8/VP9 or MP4 with H.264.
-    comparison-slider.slider.realistic(equal='realistic' more='more realistic')
-    comparison-slider.slider.pleasing(equal='pleasing' more='more pleasing')
+    comparison-slider.slider.realistic(equal='realistic' more='more realistic' :weight.sync='realistic')
+    comparison-slider.slider.pleasing(equal='pleasing' more='more pleasing' :weight.sync='pleasing')
 </template>
 
 <script>
@@ -27,6 +27,8 @@ export default {
   },
   data () {
     return {
+      realistic: undefined,
+      pleasing: undefined,
     }
   },
   computed: {
@@ -43,6 +45,14 @@ export default {
       } else {
         return null
       }
+    },
+  },
+  watch: {
+    realistic (weight) {
+      this.$emit('update:realistic', weight)
+    },
+    pleasing (weight) {
+      this.$emit('update:pleasing', weight)
     },
   },
 }
