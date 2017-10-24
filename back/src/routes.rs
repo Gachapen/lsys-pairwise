@@ -4,13 +4,45 @@ use mongodb::db::ThreadedDatabase;
 use rand::{thread_rng, Rng};
 use rand::distributions::{IndependentSample, Range};
 use rocket::{Route, State};
-use rocket::response::NamedFile;
+use rocket::http::Status;
+use rocket::response::{status, NamedFile};
 use rocket_contrib::json::Json;
 use std::path::{Path, PathBuf};
 
 use db;
-use model::Gender;
+use model::{Gender, Weighting};
 use uuid::Uuid;
+
+#[derive(Serialize, Deserialize, Debug)]
+struct UserError {
+    error: String,
+    details: Option<String>,
+}
+
+impl UserError {
+    fn new(error: &str) -> UserError {
+        UserError {
+            error: error.to_string(),
+            details: None,
+        }
+    }
+
+    #[allow(dead_code)]
+    fn with_description(error: &str, description: String) -> UserError {
+        UserError {
+            error: error.to_string(),
+            details: Some(description),
+        }
+    }
+}
+
+type UserErrorResponse = status::Custom<Json<UserError>>;
+
+impl Into<UserErrorResponse> for UserError {
+    fn into(self) -> UserErrorResponse {
+        status::Custom(Status::BadRequest, Json(self))
+    }
+}
 
 #[derive(Deserialize)]
 struct User {
@@ -23,13 +55,14 @@ impl From<User> for db::User {
         db::User {
             age: user.age as i32,
             gender: user.gender,
+            token: format!("{}", Uuid::new_v4().simple()),
         }
     }
 }
 
 /// Get all of the routes
 pub fn routes() -> Vec<Route> {
-    routes![index, post_user, get_task, get_video]
+    routes![index, post_user, get_task, get_video, post_weight]
 }
 
 #[get("/")]
@@ -51,15 +84,13 @@ fn post_user(user: Json<User>, db_client: State<mongodb::Client>) -> Result<Json
         .insert_one(user_doc.clone(), None)
         .expect("Failed inserting new user");
 
-    if !insertion.acknowledged && insertion.inserted_id.is_none() {
+    if !insertion.acknowledged || insertion.inserted_id.is_none() {
         return Err(Json(json!({
             "error": "Failed inserting document"
         })));
     }
 
-    let token = format!("{}", Uuid::new_v4().simple());
-
-    Ok(Json(json!({ "token": token })))
+    Ok(Json(json!({ "token": db_user.token })))
 }
 
 #[derive(Serialize)]
@@ -127,4 +158,53 @@ fn get_task(db_client: State<mongodb::Client>) -> Result<Json<Vec<Pair>>, Json> 
 #[get("/video/<file..>")]
 fn get_video(file: PathBuf) -> Option<NamedFile> {
     NamedFile::open(Path::new("video/").join(file)).ok()
+}
+
+#[post("/weight", data = "<weighting>")]
+fn post_weight(
+    weighting: Json<Weighting>,
+    db_client: State<mongodb::Client>,
+) -> Result<Json, UserErrorResponse> {
+    let db = db_client.db(db::NAME);
+
+    if db.collection(db::COLLECTION_USER)
+        .find_one(Some(doc!{ "token": &weighting.token }), None)
+        .expect("Failed looking up user")
+        .is_none()
+    {
+        return Err(UserError::new("User not registered").into());
+    }
+
+    if db.collection(db::COLLECTION_WEIGHT)
+        .find_one(
+            Some(doc!{
+                "token": &weighting.token,
+                "metric": to_bson(&weighting.metric).unwrap().as_str().unwrap(),
+                "a": &weighting.a,
+                "b": &weighting.b,
+            }),
+            None,
+        )
+        .expect("Failed looking up weight")
+        .is_some()
+    {
+        return Err(UserError::new("Weight already registered").into());
+    }
+
+    let weight_bson = to_bson(&weighting.into_inner()).unwrap();
+    let weight_doc = weight_bson.as_document().unwrap();
+
+    let insertion = db.collection(db::COLLECTION_WEIGHT)
+        .insert_one(weight_doc.clone(), None)
+        .expect("Failed inserting new weight");
+
+    if !insertion.acknowledged || insertion.inserted_id.is_none() {
+        panic!(
+            "Failed inserting new weight: Acknowleded: {}, ID: {:#?}",
+            insertion.acknowledged,
+            insertion.inserted_id,
+        );
+    }
+
+    Ok(Json(json!({})))
 }
