@@ -1,17 +1,31 @@
 <template>
   <div id="app">
-    <Pairwise/>
+    <router-view/>
   </div>
 </template>
 
 <script>
-import Pairwise from './components/Pairwise'
+import VueRouter from 'vue-router'
+import Register from './components/Register'
+import Task from './components/Task'
+
+const router = new VueRouter({
+  routes: [
+    {
+      path: '/',
+      component: Register,
+    },
+    {
+      path: '/task/:token',
+      component: Task,
+      props: true,
+    },
+  ],
+})
 
 export default {
   name: 'app',
-  components: {
-    Pairwise,
-  },
+  router,
 }
 </script>
 
