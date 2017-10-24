@@ -80,8 +80,8 @@ fn get_task(db_client: State<mongodb::Client>) -> Result<Json<Vec<Pair>>, Json> 
     let documents = documents.expect("Failed retrieveing sample documents");
 
     let samples: Result<Vec<db::Sample>, _> = documents
-        .iter()
-        .map(|doc| from_bson(Bson::from(doc.clone())))
+        .into_iter()
+        .map(|doc| from_bson(Bson::from(doc)))
         .collect();
     let samples = samples.expect("Failed deserializing documents");
 
