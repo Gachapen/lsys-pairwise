@@ -22,5 +22,6 @@ module.exports = {
     'no-debugger': process.env.NODE_ENV === 'production' ? 2 : 0,
     'comma-dangle': ['warn', 'always-multiline'],
     'space-infix-ops': 'warn',
+    'no-unused-vars': 'warn',
   }
 }
