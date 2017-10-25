@@ -10,7 +10,7 @@
         label(for='gender')
           span Gender:
         select(id='gender' v-model='gender')
-          option(value='' disabled selected) Select
+          option(value='' disabled) Select
           option(value='female') Female
           option(value='male') Male
           option(value='other') Other
@@ -34,7 +34,7 @@ export default {
   data () {
     return {
       age: undefined,
-      gender: undefined,
+      gender: '',
       token: null,
     }
   },
