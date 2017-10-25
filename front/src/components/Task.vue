@@ -1,7 +1,8 @@
 <template lang="pug">
   .pairwise
     component(is='comparison' :pair='currentPair' :key='pairId' :realistic.sync='realistic' :pleasing.sync='pleasing')
-    button.next(@click='next' :disabled='!canContinue') Next
+    button.next(v-if='!isLast' @click='next' :disabled='!canContinue') Next
+    button.finish(v-else @click='finish' :disabled='!canContinue') Finish
 </template>
 
 <script>
@@ -44,6 +45,9 @@ export default {
     canContinue () {
       return this.realistic && this.pleasing
     },
+    isLast () {
+      return this.pairIndex === this.pairs.length - 1
+    },
   },
   methods: {
     postWeight (metric, weight) {
@@ -67,6 +71,16 @@ export default {
         })
         .catch(error => console.error('Failed posting weights', error))
     },
+    finish () {
+      axios.all([
+        this.postWeight('realistic', this.realistic),
+        this.postWeight('pleasing', this.pleasing),
+      ])
+        .then(() => {
+          this.$router.push('/')
+        })
+        .catch(error => console.error('Failed posting weights', error))
+    },
   },
   created () {
     get(`${API_BASE}/task`)
@@ -86,7 +100,7 @@ export default {
   padding-top: 20px
   background-color: rgb(127, 127, 127)
 
-  >button.next
+  >button
     margin-top: 10px
     padding: 10px 20px
     border: 0
