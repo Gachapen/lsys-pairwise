@@ -14,6 +14,7 @@ mongodb = "^0.3.3"
 uuid = { version = "^0.5.1", features = ["serde", "v4"] }
 rand = "^0.3.17"
 clap = "^2.27.0"
+nalgebra = "^0.13.1"
 
 [dependencies.rocket_contrib]
 version = "^0.3.2"

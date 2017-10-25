@@ -50,6 +50,13 @@ pub fn init(db_client: &mongodb::Client) -> mongodb::Result<()> {
             }),
         ),
         IndexModel::new(
+            doc! { "token": 1, "metric": 1 },
+            Some(IndexOptions {
+                unique: Some(false),
+                ..Default::default()
+            }),
+        ),
+        IndexModel::new(
             doc! { "metric": 1, "a": 1, "b": 1 },
             Some(IndexOptions {
                 unique: Some(false),
