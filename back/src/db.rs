@@ -1,8 +1,9 @@
-use mongodb::{self, ThreadedClient};
+use mongodb::{self, Client, ThreadedClient};
 use mongodb::db::ThreadedDatabase;
 use mongodb::coll::options::{IndexModel, IndexOptions};
 
 use model::Gender;
+use cfg;
 
 pub const NAME: &'static str = "lsys-pairwise";
 pub const COLLECTION_SAMPLE: &'static str = "sample";
@@ -65,4 +66,12 @@ pub fn init(db_client: &mongodb::Client) -> mongodb::Result<()> {
     ])?;
 
     Ok(())
+}
+
+pub fn connect(db_cfg: &cfg::Db) -> Client {
+    let client = Client::connect(&db_cfg.host, 27017)
+        .expect(&format!("Failed to connect to DB at {}", db_cfg.host));
+    println!("Connected to MongoDB at {}", db_cfg.host);
+
+    client
 }
