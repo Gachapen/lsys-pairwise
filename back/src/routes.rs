@@ -53,7 +53,7 @@ struct User {
 impl From<User> for db::User {
     fn from(user: User) -> db::User {
         db::User {
-            age: user.age as i32,
+            age: i32::from(user.age),
             gender: user.gender,
             token: format!("{}", Uuid::new_v4().simple()),
         }
