@@ -158,14 +158,18 @@ fn get_task(
     let mut pairs = Vec::with_capacity(num_pairs);
     for (i, id_a) in ids.iter().enumerate() {
         for id_b in ids.iter().skip(i + 1) {
-            pairs.push(Pair {
-                a: id_a.to_hex(),
-                b: id_b.to_hex(),
-            });
+            let needs_measurement =
+                db::missing_measurement(user, id_a, id_b, &db_client).expect("Failed quering DB");
+            if needs_measurement {
+                pairs.push(Pair {
+                    a: id_a.to_hex(),
+                    b: id_b.to_hex(),
+                });
+            }
         }
     }
 
-    assert_eq!(num_pairs, pairs.len());
+    assert!(pairs.len() <= num_pairs);
 
     let chance_range = Range::new(0.0, 1.0);
     let mut rng = thread_rng();

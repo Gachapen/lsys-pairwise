@@ -116,3 +116,36 @@ pub fn connect(db_cfg: &cfg::Db) -> Client {
 
     client
 }
+
+pub fn missing_measurement(
+    user_token: &str,
+    id_a: &ObjectId,
+    id_b: &ObjectId,
+    db_client: &Client,
+) -> Result<bool, Error> {
+    let doc = db_client.db(NAME).collection(COLLECTION_WEIGHT).find_one(
+        Some(doc! {
+            "token": user_token,
+            "metric": {
+                "$in": [
+                    serde_enum::to_string(&Metric::Realistic).unwrap(),
+                    serde_enum::to_string(&Metric::Pleasing).unwrap(),
+                ],
+            },
+            "a": {
+                "$in": [id_a.clone(), id_b.clone()],
+            },
+            "b": {
+                "$in": [id_b.clone(), id_a.clone()],
+            },
+        }),
+        Some(FindOptions {
+            projection: Some(doc! {
+                "_id": 0,
+            }),
+            ..Default::default()
+        }),
+    )?;
+
+    Ok(doc.is_none())
+}
