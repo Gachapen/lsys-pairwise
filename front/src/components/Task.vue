@@ -83,7 +83,7 @@ export default {
     },
   },
   created () {
-    get(`${API_BASE}/task`)
+    get(`${API_BASE}/task/improve/user/${this.token}`)
       .then(response => {
         this.pairs = response.data
         this.pairIndex = 0

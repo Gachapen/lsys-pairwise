@@ -38,8 +38,14 @@ fn main() {
             SubCommand::with_name("stats")
                 .about("Calculate statistics from data")
                 .arg(
+                    Arg::with_name("task")
+                        .long("task")
+                        .takes_value(true)
+                        .required(true)
+                        .help("Task to get stats for"),
+                )
+                .arg(
                     Arg::with_name("token")
-                        .short("t")
                         .long("token")
                         .takes_value(true)
                         .required(true)
@@ -47,7 +53,6 @@ fn main() {
                 )
                 .arg(
                     Arg::with_name("metric")
-                        .short("m")
                         .long("metric")
                         .takes_value(true)
                         .required(true)
@@ -60,10 +65,11 @@ fn main() {
     if matches.subcommand_matches("server").is_some() {
         server::run();
     } else if let Some(matches) = matches.subcommand_matches("stats") {
+        let task = matches.value_of("task").unwrap();
         let token = matches.value_of("token").unwrap();
         let metric = serde_enum::from_str(matches.value_of("metric").unwrap()).unwrap();
         let cfg = Config::from_env();
-        stats::print_stats(token, &metric, &cfg.db);
+        stats::print_stats(task, token, &metric, &cfg.db);
     } else {
         println!("No subcommand used: Exiting.");
     }

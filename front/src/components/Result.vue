@@ -5,6 +5,7 @@
       .video(v-for='(rank, index) of realistic_ranking')
         h4 {{ index + 1 }}.
         video(autoplay loop)
+          source(:src='webmUrl(rank.name)' type='video/webm')
           source(:src='mp4Url(rank.name)' type='video/mp4')
           | Can't play video; your browser doesn't support HTML5 video in WebM with VP8/VP9 or MP4 with H.264.
       .plot
@@ -17,6 +18,7 @@
       .video(v-for='(rank, index) of pleasing_ranking')
         h4 {{ index + 1 }}.
         video(autoplay loop)
+          source(:src='webmUrl(rank.name)' type='video/webm')
           source(:src='mp4Url(rank.name)' type='video/mp4')
           | Can't play video; your browser doesn't support HTML5 video in WebM with VP8/VP9 or MP4 with H.264.
       .plot
@@ -55,8 +57,11 @@ export default {
     },
   },
   methods: {
-    mp4Url (name) {
-      return `${API_BASE}/video/${name}.mp4`
+    mp4Url (id) {
+      return `${API_BASE}/video/${id}/mp4`
+    },
+    webmUrl (id) {
+      return `${API_BASE}/video/${id}/webm`
     },
     calculatePoints (ranking) {
       let points = [0]
@@ -75,13 +80,13 @@ export default {
     },
   },
   created () {
-    get(`${API_BASE}/task/${this.token}/ranking/realistic`)
+    get(`${API_BASE}/task/improve/ranking/realistic/user/${this.token}`)
       .then(response => {
         this.realistic_ranking = response.data
       })
       .catch(error => console.error('Failed retrieving task', error))
 
-    get(`${API_BASE}/task/${this.token}/ranking/pleasing`)
+    get(`${API_BASE}/task/improve/ranking/pleasing/user/${this.token}`)
       .then(response => {
         this.pleasing_ranking = response.data
       })

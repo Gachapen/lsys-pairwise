@@ -2,10 +2,12 @@
   .comparison
     .video-pair
       video(autoplay loop)
-        source(v-if='srcA' :src='srcA' type='video/mp4')
+        source(v-if='srcA' :src='`${srcA}/webm`' type='video/webm')
+        source(v-if='srcA' :src='`${srcA}/mp4`' type='video/mp4')
         | Can't play video; your browser doesn't support HTML5 video in WebM with VP8/VP9 or MP4 with H.264.
       video(autoplay loop)
-        source(v-if='srcB' :src='srcB' type='video/mp4')
+        source(v-if='srcB' :src='`${srcB}/webm`' type='video/webm')
+        source(v-if='srcB' :src='`${srcB}/mp4`' type='video/mp4')
         | Can't play video; your browser doesn't support HTML5 video in WebM with VP8/VP9 or MP4 with H.264.
     comparison-slider.slider.realistic(equal='realistic' more='more realistic' :weight.sync='realistic')
     comparison-slider.slider.pleasing(equal='pleasing' more='more pleasing' :weight.sync='pleasing')
@@ -34,14 +36,14 @@ export default {
   computed: {
     srcA () {
       if (this.pair.a) {
-        return `${API_BASE}/video/${this.pair.a}.mp4`
+        return `${API_BASE}/video/${this.pair.a}`
       } else {
         return null
       }
     },
     srcB () {
       if (this.pair.b) {
-        return `${API_BASE}/video/${this.pair.b}.mp4`
+        return `${API_BASE}/video/${this.pair.b}`
       } else {
         return null
       }

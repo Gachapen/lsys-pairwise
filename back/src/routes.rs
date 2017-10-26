@@ -1,6 +1,8 @@
 use bson::{from_bson, to_bson, Bson};
+use bson::oid::ObjectId;
 use mongodb::{self, ThreadedClient};
 use mongodb::db::ThreadedDatabase;
+use mongodb::coll::options::FindOptions;
 use rand::{thread_rng, Rng};
 use rand::distributions::{IndependentSample, Range};
 use rocket::{Route, State};
@@ -8,7 +10,7 @@ use rocket::http::{RawStr, Status};
 use rocket::request::FromParam;
 use rocket::response::{status, NamedFile};
 use rocket_contrib::json::Json;
-use std::path::{Path, PathBuf};
+use std::path::Path;
 
 use db;
 use model::{Gender, Metric, Weighting};
@@ -120,31 +122,45 @@ struct Pair {
     b: String,
 }
 
-#[get("/task")]
-fn get_task(db_client: State<mongodb::Client>) -> Result<Json<Vec<Pair>>, Json> {
+#[get("/task/<task>/user/<user>")]
+fn get_task(
+    task: &RawStr,
+    user: &RawStr,
+    db_client: State<mongodb::Client>,
+) -> Result<Json<Vec<Pair>>, Json> {
     let sample_cursor = db_client
         .db(db::NAME)
         .collection(db::COLLECTION_SAMPLE)
-        .find(None, None)
+        .find(
+            Some(doc! {
+                "task": task.as_str(),
+            }),
+            Some(FindOptions {
+                projection: Some(doc! {
+                    "_id": 1,
+                }),
+                ..Default::default()
+            }),
+        )
         .expect("Failed retrieving samples");
 
     let documents: Result<Vec<_>, _> = sample_cursor.collect();
     let documents = documents.expect("Failed retrieveing sample documents");
 
-    let samples: Result<Vec<db::Sample>, _> = documents
-        .into_iter()
-        .map(|doc| from_bson(Bson::from(doc)))
-        .collect();
-    let samples = samples.expect("Failed deserializing documents");
+    let ids: Vec<&ObjectId> = documents
+        .iter()
+        .map(|doc| doc.get_object_id("_id"))
+        .collect::<Result<_, _>>()
+        .expect("Failed deserializing documents");
 
-    let num_samples = samples.len();
+    let num_samples = ids.len();
     let num_pairs = (num_samples * (num_samples - 1)) / 2;
     let mut pairs = Vec::with_capacity(num_pairs);
-    for (i, sample_a) in samples.iter().enumerate() {
-        for sample_b in samples.iter().skip(i + 1) {
+    for (i, id_a) in ids.iter().enumerate() {
+        for id_b in ids.iter().skip(i + 1) {
             pairs.push(Pair {
-                a: sample_a.name.clone(),
-                b: sample_b.name.clone(),
+                a: id_a.to_hex(),
+                b: id_b.to_hex(),
             });
         }
     }
@@ -176,20 +192,48 @@ fn get_task(db_client: State<mongodb::Client>) -> Result<Json<Vec<Pair>>, Json> 
     Ok(Json(pairs))
 }
 
-#[get("/task/<token>/ranking/<metric>")]
+#[get("/task/<task>/ranking/<metric>/user/<user>")]
 fn get_criteria_weights(
-    token: &RawStr,
+    task: &RawStr,
     metric: Metric,
+    user: &RawStr,
     db_client: State<mongodb::Client>,
 ) -> Result<Json<Vec<SampleWeight>>, Json> {
-    Ok(Json(
-        stats::calculate_sample_weights(token, &metric, &db_client),
-    ))
+    Ok(Json(stats::calculate_sample_weights(
+        task,
+        user,
+        &metric,
+        &db_client,
+    )))
 }
 
-#[get("/video/<file..>")]
-fn get_video(file: PathBuf) -> Option<NamedFile> {
-    NamedFile::open(Path::new("video/").join(file)).ok()
+#[get("/video/<id>/<ext>")]
+fn get_video(id: &RawStr, ext: &RawStr, db_client: State<mongodb::Client>) -> Option<NamedFile> {
+    let object_id = match ObjectId::with_string(&id) {
+        Ok(object_id) => object_id,
+        Err(_) => return None,
+    };
+
+    let doc = db_client
+        .db(db::NAME)
+        .collection(db::COLLECTION_SAMPLE)
+        .find_one(
+            Some(doc! {
+                "_id": object_id,
+            }),
+            None,
+        )
+        .expect("Failed retrieving samples");
+
+    if let Some(doc) = doc {
+        let sample: db::Sample = from_bson(Bson::from(doc)).expect("Failed deserializing doc");
+        let filename = format!("{}.{}", sample.name, ext);
+        let path = Path::new("task/").join(sample.task).join(filename);
+        println!("{}", path.to_str().unwrap());
+        NamedFile::open(path).ok()
+    } else {
+        None
+    }
 }
 
 #[post("/weight", data = "<weighting>")]
@@ -212,8 +256,8 @@ fn post_weight(
             Some(doc!{
                 "token": &weighting.token,
                 "metric": to_bson(&weighting.metric).unwrap().as_str().unwrap(),
-                "a": &weighting.a,
-                "b": &weighting.b,
+                "a": ObjectId::with_string(&weighting.a).unwrap(),
+                "b": ObjectId::with_string(&weighting.b).unwrap(),
             }),
             None,
         )

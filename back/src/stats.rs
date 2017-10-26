@@ -1,14 +1,13 @@
 use bson::{from_bson, Bson};
+use bson::oid::ObjectId;
 use mongodb::{self, ThreadedClient};
 use mongodb::db::{Database, ThreadedDatabase};
 use na::{DMatrix, DVector};
 use serde_enum;
-use std::collections::HashMap;
-use std::iter::FromIterator;
 
-use db;
+use db::{self, Weighting};
 use cfg;
-use model::{Metric, Weighting};
+use model::Metric;
 
 #[derive(Serialize, Deserialize)]
 pub struct SampleWeight {
@@ -16,32 +15,33 @@ pub struct SampleWeight {
     weight: f32,
 }
 
+#[derive(Debug)]
 struct SampleSet {
     num: usize,
-    names: Vec<String>,
-    index_map: HashMap<String, usize>,
+    ids: Vec<ObjectId>,
 }
 
 pub fn calculate_sample_weights(
+    task: &str,
     token: &str,
     metric: &Metric,
     db_client: &mongodb::Client,
 ) -> Vec<SampleWeight> {
     let db = db_client.db(db::NAME);
 
-    let sample_set = get_sample_set(&db);
+    let sample_set = get_sample_set(task, &db);
     let mut weight_matrix = make_weight_matrix(token, metric, &sample_set, &db);
     normalize_weight_matrix(&mut weight_matrix, sample_set.num);
     let criteria_weights = calculate_criteria_weights(&weight_matrix, sample_set.num);
 
-    make_sample_weights(&criteria_weights, &sample_set.names)
+    make_sample_weights(&criteria_weights, &sample_set.ids)
 }
 
-pub fn print_stats(token: &str, metric: &Metric, cfg: &cfg::Db) {
+pub fn print_stats(task: &str, token: &str, metric: &Metric, cfg: &cfg::Db) {
     let db_client = db::connect(&cfg);
     let db = db_client.db(db::NAME);
 
-    let sample_set = get_sample_set(&db);
+    let sample_set = get_sample_set(task, &db);
     println!("N: {}", sample_set.num);
 
     let mut weight_matrix = make_weight_matrix(token, metric, &sample_set, &db);
@@ -53,36 +53,29 @@ pub fn print_stats(token: &str, metric: &Metric, cfg: &cfg::Db) {
     let criteria_weights = calculate_criteria_weights(&weight_matrix, sample_set.num);
     println!("Criteria weights: {}", criteria_weights);
 
-    let sample_weights = make_sample_weights(&criteria_weights, &sample_set.names);
+    let sample_weights = make_sample_weights(&criteria_weights, &sample_set.ids);
     for &SampleWeight { ref name, weight } in sample_weights.iter() {
         println!("{} <= {}", name, weight);
     }
 }
 
-fn get_sample_set(db: &Database) -> SampleSet {
+fn get_sample_set(task: &str, db: &Database) -> SampleSet {
     let sample_docs: Vec<_> = db.collection(db::COLLECTION_SAMPLE)
-        .find(None, None)
+        .find(Some(doc!{ "task": task }), None)
         .unwrap()
         .collect::<Result<_, _>>()
         .unwrap();
-    let samples: Vec<db::Sample> = sample_docs
+    let ids: Vec<ObjectId> = sample_docs
         .into_iter()
-        .map(|doc| from_bson(Bson::from(doc)))
-        .collect::<Result<_, _>>()
-        .unwrap();
-    let num = samples.len();
+        .map(|doc| {
+            doc.get_object_id("_id")
+                .expect("Failed deserializing documents")
+                .clone()
+        })
+        .collect();
+    let num = ids.len();
 
-    let names: Vec<_> = samples.into_iter().map(|sample| sample.name).collect();
-
-    let index_map = HashMap::<String, usize>::from_iter(
-        names.iter().enumerate().map(|(i, name)| (name.clone(), i)),
-    );
-
-    SampleSet {
-        num: num,
-        index_map: index_map,
-        names: names,
-    }
+    SampleSet { num: num, ids: ids }
 }
 
 fn make_weight_matrix(
@@ -91,37 +84,67 @@ fn make_weight_matrix(
     sample_set: &SampleSet,
     db: &Database,
 ) -> DMatrix<f32> {
-    let SampleSet {
-        num, ref index_map, ..
-    } = *sample_set;
-    let weights_cursor = db.collection(db::COLLECTION_WEIGHT)
-        .find(
-            Some(doc! {
-                "token": token,
-                "metric": serde_enum::to_string(&metric).unwrap(),
-            }),
-            None,
-        )
-        .unwrap();
-    let weight_docs: Vec<_> = weights_cursor.collect::<Result<_, _>>().unwrap();
-    let weights: Vec<Weighting> = weight_docs
-        .into_iter()
-        .map(|doc| from_bson(Bson::from(doc)))
-        .collect::<Result<_, _>>()
-        .unwrap();
+    let SampleSet { num, ref ids, .. } = *sample_set;
+
+    let metric_str = serde_enum::to_string(&metric).unwrap();
 
     let mut weight_matrix = DMatrix::<f32>::identity(num, num);
-    for weight in weights {
-        let col = index_map[weight.a.as_str()];
-        let row = index_map[weight.b.as_str()];
-        weight_matrix
-            .columns_mut(col, 1)
-            .rows_mut(row, 1)
-            .fill(weight.weight);
-        weight_matrix
-            .columns_mut(row, 1)
-            .rows_mut(col, 1)
-            .fill(1.0 / weight.weight);
+    for col in 0..num {
+        for row in (col + 1)..num {
+            let a = &ids[col];
+            let b = &ids[row];
+
+            let doc = db.collection(db::COLLECTION_WEIGHT)
+                .find_one(
+                    Some(doc! {
+                        "token": token,
+                        "metric": &metric_str,
+                        "a": a.clone(),
+                        "b": b.clone(),
+                    }),
+                    None,
+                )
+                .expect("Failed quering DB");
+
+            if let Some(doc) = doc {
+                // Weight was found in column major order.
+                let weight: Weighting =
+                    from_bson(Bson::from(doc)).expect("Failed deserializing weight");
+                weight_matrix
+                    .columns_mut(col, 1)
+                    .rows_mut(row, 1)
+                    .fill(weight.weight);
+                weight_matrix
+                    .columns_mut(row, 1)
+                    .rows_mut(col, 1)
+                    .fill(1.0 / weight.weight);
+            } else {
+                // Alternatively weight is in row major order.
+                let doc = db.collection(db::COLLECTION_WEIGHT)
+                    .find_one(
+                        Some(doc! {
+                            "token": token,
+                            "metric": &metric_str,
+                            "a": b.clone(),
+                            "b": a.clone(),
+                        }),
+                        None,
+                    )
+                    .expect("Failed quering DB")
+                    .expect("Missing weight");
+
+                let weight: Weighting =
+                    from_bson(Bson::from(doc)).expect("Failed deserializing weight");
+                weight_matrix
+                    .columns_mut(col, 1)
+                    .rows_mut(row, 1)
+                    .fill(1.0 / weight.weight);
+                weight_matrix
+                    .columns_mut(row, 1)
+                    .rows_mut(col, 1)
+                    .fill(weight.weight);
+            }
+        }
     }
 
     weight_matrix
@@ -148,13 +171,13 @@ fn calculate_criteria_weights(weight_matrix: &DMatrix<f32>, num: usize) -> DVect
     )
 }
 
-fn make_sample_weights(criteria_weights: &DVector<f32>, names: &[String]) -> Vec<SampleWeight> {
+fn make_sample_weights(criteria_weights: &DVector<f32>, ids: &[ObjectId]) -> Vec<SampleWeight> {
     let mut sample_weights: Vec<_> = criteria_weights
         .iter()
         .enumerate()
         .map(|(i, w)| {
             SampleWeight {
-                name: names[i].clone(),
+                name: ids[i].to_hex(),
                 weight: *w,
             }
         })
