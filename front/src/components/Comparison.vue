@@ -1,10 +1,10 @@
 <template lang="pug">
   .comparison
     .video-pair
-      video(autoplay loop ref='videoA')
+      video(autoplay loop)
         source(v-if='srcA' :src='srcA' type='video/mp4')
         | Can't play video; your browser doesn't support HTML5 video in WebM with VP8/VP9 or MP4 with H.264.
-      video(autoplay loop ref='videoB')
+      video(autoplay loop)
         source(v-if='srcB' :src='srcB' type='video/mp4')
         | Can't play video; your browser doesn't support HTML5 video in WebM with VP8/VP9 or MP4 with H.264.
     comparison-slider.slider.realistic(equal='realistic' more='more realistic' :weight.sync='realistic')

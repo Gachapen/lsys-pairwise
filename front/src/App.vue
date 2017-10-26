@@ -8,6 +8,7 @@
 import VueRouter from 'vue-router'
 import Register from './components/Register'
 import Task from './components/Task'
+import Result from './components/Result'
 
 const router = new VueRouter({
   routes: [
@@ -18,6 +19,11 @@ const router = new VueRouter({
     {
       path: '/task/:token',
       component: Task,
+      props: true,
+    },
+    {
+      path: '/result/:token',
+      component: Result,
       props: true,
     },
   ],

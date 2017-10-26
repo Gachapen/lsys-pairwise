@@ -77,7 +77,7 @@ export default {
         this.postWeight('pleasing', this.pleasing),
       ])
         .then(() => {
-          this.$router.push('/')
+          this.$router.push({ path: '/result', params: { token: this.token } })
         })
         .catch(error => console.error('Failed posting weights', error))
     },
