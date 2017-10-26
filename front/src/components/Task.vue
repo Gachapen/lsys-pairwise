@@ -87,6 +87,10 @@ export default {
       .then(response => {
         this.pairs = response.data
         this.pairIndex = 0
+
+        if (this.pairs.length === 0) {
+          this.$router.push({ name: 'result', params: { token: this.token } })
+        }
       })
       .catch(error => console.error('Failed retrieving task', error))
   },
