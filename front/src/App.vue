@@ -22,6 +22,7 @@ const router = new VueRouter({
       props: true,
     },
     {
+      name: 'result',
       path: '/result/:token',
       component: Result,
       props: true,
