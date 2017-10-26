@@ -4,14 +4,17 @@ use mongodb::db::ThreadedDatabase;
 use rand::{thread_rng, Rng};
 use rand::distributions::{IndependentSample, Range};
 use rocket::{Route, State};
-use rocket::http::Status;
+use rocket::http::{RawStr, Status};
+use rocket::request::FromParam;
 use rocket::response::{status, NamedFile};
 use rocket_contrib::json::Json;
 use std::path::{Path, PathBuf};
 
 use db;
-use model::{Gender, Weighting};
+use model::{Gender, Metric, Weighting};
 use uuid::Uuid;
+use stats::{self, SampleWeight};
+use serde_enum;
 
 #[derive(Serialize, Deserialize, Debug)]
 struct UserError {
@@ -60,9 +63,27 @@ impl From<User> for db::User {
     }
 }
 
+impl<'r> FromParam<'r> for Metric {
+    type Error = &'r RawStr;
+
+    fn from_param(param: &'r RawStr) -> Result<Self, Self::Error> {
+        match serde_enum::from_str(param) {
+            Ok(value) => Ok(value),
+            Err(_) => Err(param),
+        }
+    }
+}
+
 /// Get all of the routes
 pub fn routes() -> Vec<Route> {
-    routes![index, post_user, get_task, get_video, post_weight]
+    routes![
+        index,
+        post_user,
+        get_task,
+        get_criteria_weights,
+        get_video,
+        post_weight
+    ]
 }
 
 #[get("/")]
@@ -153,6 +174,17 @@ fn get_task(db_client: State<mongodb::Client>) -> Result<Json<Vec<Pair>>, Json> 
     rng.shuffle(&mut pairs);
 
     Ok(Json(pairs))
+}
+
+#[get("/task/<token>/ranking/<metric>")]
+fn get_criteria_weights(
+    token: &RawStr,
+    metric: Metric,
+    db_client: State<mongodb::Client>,
+) -> Result<Json<Vec<SampleWeight>>, Json> {
+    Ok(Json(
+        stats::calculate_sample_weights(token, &metric, &db_client),
+    ))
 }
 
 #[get("/video/<file..>")]

@@ -26,6 +26,8 @@ mod serde_enum;
 
 use clap::{App, Arg, SubCommand};
 
+use cfg::Config;
+
 fn main() {
     let matches = App::new("lsys-pairwise")
         .version("0.1")
@@ -60,7 +62,8 @@ fn main() {
     } else if let Some(matches) = matches.subcommand_matches("stats") {
         let token = matches.value_of("token").unwrap();
         let metric = serde_enum::from_str(matches.value_of("metric").unwrap()).unwrap();
-        stats::print_stats(token, &metric);
+        let cfg = Config::from_env();
+        stats::print_stats(token, &metric, &cfg.db);
     } else {
         println!("No subcommand used: Exiting.");
     }
