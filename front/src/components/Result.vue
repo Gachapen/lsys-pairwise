@@ -117,13 +117,12 @@ export default {
     margin-bottom: 8px
 
   >video
-    width: 250px
-    height: 250px
+    width: 200px
+    height: 200px
 
 .plot
-  width: 1500px
+  margin: 0 100px
   height: 33px
-  margin: 0 auto
   margin-top: 20px
   position: relative
 
