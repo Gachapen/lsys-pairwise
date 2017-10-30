@@ -13,12 +13,6 @@ pub const COLLECTION_SAMPLE: &'static str = "sample";
 pub const COLLECTION_USER: &'static str = "user";
 pub const COLLECTION_WEIGHT: &'static str = "weight";
 
-#[derive(Serialize, Deserialize)]
-pub struct Sample {
-    pub task: String,
-    pub name: String,
-}
-
 #[derive(Serialize)]
 pub struct User {
     pub age: i32,

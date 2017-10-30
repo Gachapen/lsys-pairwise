@@ -21,3 +21,9 @@ pub struct Weighting {
     pub b: String,
     pub weight: f32,
 }
+
+#[derive(Serialize, Deserialize)]
+pub struct Sample {
+    pub task: String,
+    pub name: String,
+}

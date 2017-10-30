@@ -10,7 +10,8 @@ use std::{fs, io};
 use std::path::Path;
 
 use cfg::Config;
-use db::{self, Sample};
+use db;
+use model::Sample;
 use routes::routes;
 
 const VIDEOS_PATH: &'static str = "./task";

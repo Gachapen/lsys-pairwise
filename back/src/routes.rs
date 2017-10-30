@@ -1,5 +1,5 @@
 use bson::{from_bson, to_bson, Bson};
-use bson::oid::ObjectId;
+use bson::oid::{self, ObjectId};
 use mongodb::{self, ThreadedClient};
 use mongodb::db::ThreadedDatabase;
 use mongodb::coll::options::FindOptions;
@@ -10,42 +10,54 @@ use rocket::http::{RawStr, Status};
 use rocket::request::FromParam;
 use rocket::response::{status, NamedFile};
 use rocket_contrib::json::Json;
+use std::error::Error;
 use std::path::Path;
 
 use db;
-use model::{Gender, Metric, Weighting};
+use model::{Gender, Metric, Sample, Weighting};
 use uuid::Uuid;
 use stats::{self, SampleWeight};
 use serde_enum;
 
-#[derive(Serialize, Deserialize, Debug)]
-struct UserError {
+#[derive(Debug)]
+struct RequestError {
+    status: Status,
     error: String,
     details: Option<String>,
 }
 
-impl UserError {
-    fn new(error: &str) -> UserError {
-        UserError {
+impl RequestError {
+    fn new(error: &str) -> RequestError {
+        RequestError {
+            status: Status::BadRequest,
+            error: error.to_string(),
+            details: None,
+        }
+    }
+
+    fn with_status(status: Status, error: &str) -> RequestError {
+        RequestError {
+            status: status,
             error: error.to_string(),
             details: None,
         }
     }
 
     #[allow(dead_code)]
-    fn with_description(error: &str, description: String) -> UserError {
-        UserError {
+    fn with_description(status: Status, error: &str, description: String) -> RequestError {
+        RequestError {
+            status: status,
             error: error.to_string(),
             details: Some(description),
         }
     }
 }
 
-type UserErrorResponse = status::Custom<Json<UserError>>;
+type RequestErrorResponse = status::Custom<Json<RequestError>>;
 
-impl Into<UserErrorResponse> for UserError {
-    fn into(self) -> UserErrorResponse {
-        status::Custom(Status::BadRequest, Json(self))
+impl Into<RequestErrorResponse> for RequestError {
+    fn into(self) -> RequestErrorResponse {
+        status::Custom(self.status, Json(self))
     }
 }
 
@@ -84,7 +96,8 @@ pub fn routes() -> Vec<Route> {
         get_task,
         get_criteria_weights,
         get_video,
-        post_weight
+        post_weight,
+        get_sample,
     ]
 }
 
@@ -230,7 +243,7 @@ fn get_video(id: &RawStr, ext: &RawStr, db_client: State<mongodb::Client>) -> Op
         .expect("Failed retrieving samples");
 
     if let Some(doc) = doc {
-        let sample: db::Sample = from_bson(Bson::from(doc)).expect("Failed deserializing doc");
+        let sample: Sample = from_bson(Bson::from(doc)).expect("Failed deserializing doc");
         let filename = format!("{}.{}", sample.name, ext);
         let path = Path::new("task/").join(sample.task).join(filename);
         println!("{}", path.to_str().unwrap());
@@ -244,7 +257,7 @@ fn get_video(id: &RawStr, ext: &RawStr, db_client: State<mongodb::Client>) -> Op
 fn post_weight(
     weighting: Json<Weighting>,
     db_client: State<mongodb::Client>,
-) -> Result<Json, UserErrorResponse> {
+) -> Result<Json, RequestErrorResponse> {
     let db = db_client.db(db::NAME);
 
     if db.collection(db::COLLECTION_USER)
@@ -252,7 +265,7 @@ fn post_weight(
         .expect("Failed looking up user")
         .is_none()
     {
-        return Err(UserError::new("User not registered").into());
+        return Err(RequestError::new("User not registered").into());
     }
 
     if db.collection(db::COLLECTION_WEIGHT)
@@ -268,7 +281,7 @@ fn post_weight(
         .expect("Failed looking up weight")
         .is_some()
     {
-        return Err(UserError::new("Weight already registered").into());
+        return Err(RequestError::new("Weight already registered").into());
     }
 
     let weight_bson = to_bson(&weighting.into_inner()).unwrap();
@@ -287,4 +300,38 @@ fn post_weight(
     }
 
     Ok(Json(json!({})))
+}
+
+#[get("/sample/<id>")]
+fn get_sample(
+    id: &RawStr,
+    db_client: State<mongodb::Client>,
+) -> Result<Json<Sample>, RequestErrorResponse> {
+    let db = db_client.db(db::NAME);
+
+    let object_id = match ObjectId::with_string(id) {
+        Ok(object_id) => object_id,
+        Err(error) => match error {
+            oid::Error::ArgumentError(_) | oid::Error::FromHexError(_) => {
+                return Err(RequestError::new("Invalid ID provided").into());
+            }
+            _ => panic!("Failed creating OID: {}", error.description()),
+        },
+    };
+
+    let sample_res = db.collection(db::COLLECTION_SAMPLE)
+        .find_one(
+            Some(doc!{
+                "_id": object_id,
+            }),
+            None,
+        )
+        .expect("Failed looking up sample");
+
+    if let Some(sample_doc) = sample_res {
+        let sample = from_bson(Bson::from(sample_doc)).expect("Failed deserializing Sample");
+        Ok(Json(sample))
+    } else {
+        return Err(RequestError::with_status(Status::NotFound, "Sample not found").into());
+    }
 }
