@@ -4,7 +4,7 @@
       h2 Most realistic
       .video(v-for='(rank, index) of realistic_ranking')
         h4 {{ index + 1 }}.
-        video(autoplay loop)
+        video(autoplay loop :title='sample_names[rank.name]')
           source(:src='webmUrl(rank.name)' type='video/webm')
           source(:src='mp4Url(rank.name)' type='video/mp4')
           | Can't play video; your browser doesn't support HTML5 video in WebM with VP8/VP9 or MP4 with H.264.
@@ -17,7 +17,7 @@
       h2 Most pleasing
       .video(v-for='(rank, index) of pleasing_ranking')
         h4 {{ index + 1 }}.
-        video(autoplay loop)
+        video(autoplay loop :title='sample_names[rank.name]')
           source(:src='webmUrl(rank.name)' type='video/webm')
           source(:src='mp4Url(rank.name)' type='video/mp4')
           | Can't play video; your browser doesn't support HTML5 video in WebM with VP8/VP9 or MP4 with H.264.
@@ -29,6 +29,7 @@
 </template>
 
 <script>
+import Vue from 'vue'
 import { last } from 'lodash'
 import { API_BASE } from '../config'
 import { get } from 'axios'
@@ -46,6 +47,7 @@ export default {
     return {
       realistic_ranking: [],
       pleasing_ranking: [],
+      sample_names: {},
     }
   },
   computed: {
@@ -78,11 +80,21 @@ export default {
 
       return points
     },
+    fetchNames () {
+      for (let rank of this.realistic_ranking) {
+        get(`${API_BASE}/sample/${rank.name}`)
+          .then(response => {
+            Vue.set(this.sample_names, rank.name, response.data.name)
+          })
+          .catch(error => console.error('Failed retrieving task', error))
+      }
+    },
   },
   created () {
     get(`${API_BASE}/task/improve/ranking/realistic/user/${this.token}`)
       .then(response => {
         this.realistic_ranking = response.data
+        this.fetchNames()
       })
       .catch(error => console.error('Failed retrieving task', error))
 
