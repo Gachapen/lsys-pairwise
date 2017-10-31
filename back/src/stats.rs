@@ -11,8 +11,8 @@ use model::Metric;
 
 #[derive(Serialize, Deserialize)]
 pub struct SampleWeight {
-    name: String,
-    weight: f32,
+    pub name: String,
+    pub weight: f32,
 }
 
 #[derive(Debug)]

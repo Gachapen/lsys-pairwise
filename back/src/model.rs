@@ -26,4 +26,5 @@ pub struct Weighting {
 pub struct Sample {
     pub task: String,
     pub name: String,
+    pub fitness: f32,
 }

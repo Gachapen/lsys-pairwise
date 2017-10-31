@@ -6,7 +6,9 @@ use mongodb::coll::options::ReplaceOptions;
 use rocket;
 use rocket::http::Method;
 use rocket_cors::{AllowedHeaders, AllowedOrigins, Cors};
+use serde_yaml;
 use std::{fs, io};
+use std::fs::File;
 use std::path::Path;
 
 use cfg::Config;
@@ -53,19 +55,33 @@ pub fn run() {
 }
 
 fn scan_videos(dir_path: &Path, collection: &Collection) -> Result<(), io::Error> {
+    #[derive(Deserialize)]
+    struct SampleData {
+        fitness: f32,
+    }
+
     let task = dir_path.file_name().unwrap().to_str().unwrap();
     let dir_entries: Vec<_> = fs::read_dir(dir_path)?.collect::<Result<_, _>>()?;
     let mut names: Vec<_> = dir_entries
         .iter()
         .filter_map(|entry| {
             let path = entry.path();
-            if path.is_file() {
-                if let Some(file_stem) = path.file_stem() {
-                    return Some(file_stem.to_str().unwrap().to_string());
-                }
+            if !path.is_file() {
+                return None;
             }
 
-            println!("Warning: Ignoring video entry '{}'", path.to_str().unwrap());
+            if let Some(extension) = path.extension() {
+                if extension != "mp4" && extension != "webm" {
+                    return None;
+                }
+            } else {
+                return None;
+            }
+
+            if let Some(file_stem) = path.file_stem() {
+                return Some(file_stem.to_str().unwrap().to_string());
+            }
+
             None
         })
         .collect();
@@ -73,15 +89,42 @@ fn scan_videos(dir_path: &Path, collection: &Collection) -> Result<(), io::Error
     names.dedup();
 
     for name in names {
-        let sample = Sample {
-            task: task.to_string(),
-            name: name,
+        let data_path = dir_path.join(name.clone() + ".data.yml");
+        let data_file = File::open(&data_path);
+
+        let sample = match data_file {
+            Ok(file) => {
+                let data: SampleData = serde_yaml::from_reader(file).expect(&format!(
+                    "Could not deserialize data file: '{}'",
+                    data_path.to_str().unwrap()
+                ));
+                Sample {
+                    task: task.to_string(),
+                    name: name,
+                    fitness: data.fitness,
+                }
+            }
+            Err(_) => {
+                println!(
+                    "Warning: Could not open data file: '{}'",
+                    data_path.to_str().unwrap()
+                );
+                Sample {
+                    task: task.to_string(),
+                    name: name,
+                    fitness: 0.0,
+                }
+            }
         };
+
         let sample_bson = to_bson(&sample).unwrap();
         let sample_doc = sample_bson.as_document().unwrap();
 
         let insertion_res = collection.replace_one(
-            sample_doc.clone(),
+            doc! {
+                "task": &sample.task,
+                "name": &sample.name,
+            },
             sample_doc.clone(),
             Some(ReplaceOptions {
                 upsert: Some(true),

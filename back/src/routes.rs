@@ -98,6 +98,7 @@ pub fn routes() -> Vec<Route> {
         get_video,
         post_weight,
         get_sample,
+        get_technical_ranking,
     ]
 }
 
@@ -222,6 +223,54 @@ fn get_criteria_weights(
         &metric,
         &db_client,
     )))
+}
+
+#[get("/task/<task>/ranking/technical")]
+fn get_technical_ranking(
+    task: &RawStr,
+    db_client: State<mongodb::Client>,
+) -> Result<Json<Vec<SampleWeight>>, RequestErrorResponse> {
+    let sample_cursor = db_client
+        .db(db::NAME)
+        .collection(db::COLLECTION_SAMPLE)
+        .find(
+            Some(doc! {
+                "task": task.as_str(),
+            }),
+            None,
+        )
+        .expect("Failed retrieving samples");
+
+    let documents: Result<Vec<_>, _> = sample_cursor.collect();
+    let documents = documents.expect("Failed retrieveing sample documents");
+
+    let samples: Vec<(String, Sample)> = documents
+        .into_iter()
+        .map(|doc| {
+            (
+                doc.get_object_id("_id").unwrap().to_hex(),
+                from_bson(Bson::from(doc)).unwrap(),
+            )
+        })
+        .collect();
+
+    let mut weights: Vec<_> = samples
+        .into_iter()
+        .map(|(id, sample)| {
+            SampleWeight {
+                name: id,
+                weight: sample.fitness,
+            }
+        })
+        .collect();
+
+    let normalizer = 1.0 / weights.iter().map(|weight| weight.weight).sum::<f32>();
+    for weight in &mut weights {
+        weight.weight = weight.weight * normalizer;
+    }
+    weights.sort_by(|a, b| b.weight.partial_cmp(&a.weight).unwrap());
+
+    Ok(Json(weights))
 }
 
 #[get("/video/<id>/<ext>")]
