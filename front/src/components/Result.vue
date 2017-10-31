@@ -1,18 +1,18 @@
 <template lang="pug">
   .result
-    .metric.realistic
-      h2 Most realistic
-      .video(v-for='(rank, index) of realistic_ranking')
-        h4 {{ index + 1 }}.
-        video(autoplay loop :title='sample_names[rank.name]')
-          source(:src='webmUrl(rank.name)' type='video/webm')
-          source(:src='mp4Url(rank.name)' type='video/mp4')
-          | Can't play video; your browser doesn't support HTML5 video in WebM with VP8/VP9 or MP4 with H.264.
-      .plot
-        .line
-        .point(v-for='(point, index) of realistic_points' :style='{ left: point * 100 + "%" }')
-          .circle
-          .label {{ index + 1 }}
+    //- .metric.realistic
+    //-   h2 Most realistic
+    //-   .video(v-for='(rank, index) of realistic_ranking')
+    //-     h4 {{ index + 1 }}.
+    //-     video(autoplay loop :title='sample_names[rank.name]')
+    //-       source(:src='webmUrl(rank.name)' type='video/webm')
+    //-       source(:src='mp4Url(rank.name)' type='video/mp4')
+    //-       | Can't play video; your browser doesn't support HTML5 video in WebM with VP8/VP9 or MP4 with H.264.
+    //-   .plot
+    //-     .line
+    //-     .point(v-for='(point, index) of realistic_points' :style='{ left: point * 100 + "%" }')
+    //-       .circle
+    //-       .label {{ index + 1 }}
     .metric.pleasing
       h2 Most pleasing
       .video(v-for='(rank, index) of pleasing_ranking')
@@ -24,6 +24,19 @@
       .plot
         .line
         .point(v-for='(point, index) of pleasing_points' :style='{ left: point * 100 + "%" }')
+          .circle
+          .label {{ index + 1 }}
+    .metric.technical
+      h2 Technical evaluation
+      .video(v-for='(rank, index) of technical_ranking')
+        h4 {{ index + 1 }}.
+        video(autoplay loop :title='sample_names[rank.name]')
+          source(:src='webmUrl(rank.name)' type='video/webm')
+          source(:src='mp4Url(rank.name)' type='video/mp4')
+          | Can't play video; your browser doesn't support HTML5 video in WebM with VP8/VP9 or MP4 with H.264.
+      .plot
+        .line
+        .point(v-for='(point, index) of technical_points' :style='{ left: point * 100 + "%" }')
           .circle
           .label {{ index + 1 }}
 </template>
@@ -47,6 +60,7 @@ export default {
     return {
       realistic_ranking: [],
       pleasing_ranking: [],
+      technical_ranking: [],
       sample_names: {},
     }
   },
@@ -56,6 +70,9 @@ export default {
     },
     pleasing_points () {
       return this.calculatePoints(this.pleasing_ranking)
+    },
+    technical_points () {
+      return this.calculatePoints(this.technical_ranking)
     },
   },
   methods: {
@@ -96,13 +113,19 @@ export default {
         this.realistic_ranking = response.data
         this.fetchNames()
       })
-      .catch(error => console.error('Failed retrieving task', error))
+      .catch(error => console.error('Failed retrieving realistic ranking', error))
 
     get(`${API_BASE}/task/improve/ranking/pleasing/user/${this.token}`)
       .then(response => {
         this.pleasing_ranking = response.data
       })
-      .catch(error => console.error('Failed retrieving task', error))
+      .catch(error => console.error('Failed retrieving pleasing ranking', error))
+
+    get(`${API_BASE}/task/improve/ranking/technical`)
+      .then(response => {
+        this.technical_ranking = response.data
+      })
+      .catch(error => console.error('Failed retrieving technical ranking', error))
   },
 }
 </script>
