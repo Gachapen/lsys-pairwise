@@ -354,7 +354,7 @@ fn post_weight(
         .find_one(
             Some(doc!{
                 "token": &weighting.token,
-                "metric": to_bson(&weighting.metric).unwrap().as_str().unwrap(),
+                "metric": serde_enum::to_string(&weighting.metric).unwrap(),
                 "a": ObjectId::with_string(&weighting.a).unwrap(),
                 "b": ObjectId::with_string(&weighting.b).unwrap(),
             }),
