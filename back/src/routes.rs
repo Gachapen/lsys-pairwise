@@ -366,7 +366,8 @@ fn post_weight(
         return Err(RequestError::new("Weight already registered").into());
     }
 
-    let weight_bson = to_bson(&weighting.into_inner()).unwrap();
+    let db_weighting: db::Weighting = weighting.into_inner().into();
+    let weight_bson = to_bson(&db_weighting).unwrap();
     let weight_doc = weight_bson.as_document().unwrap();
 
     let insertion = db.collection(db::COLLECTION_WEIGHT)

@@ -13,7 +13,7 @@ pub enum Metric {
     Pleasing,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Deserialize)]
 pub struct Weighting {
     pub token: String,
     pub metric: Metric,
