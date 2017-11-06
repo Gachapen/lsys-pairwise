@@ -144,10 +144,19 @@ fn post_user(
         .insert_one(user_doc.clone(), None)
         .expect("Failed inserting new user");
 
-    if !insertion.acknowledged || insertion.inserted_id.is_none() {
-        return Err(Json(json!({
-            "error": "Failed inserting document"
-        })));
+    if let Some(write_exception) = insertion.write_exception {
+        panic!(
+            "Failed inserting new user: {}",
+            write_exception.description()
+        );
+    }
+
+    if !insertion.acknowledged {
+        panic!("Failed inserting new user: Insertion not acknowleded");
+    }
+
+    if insertion.inserted_id.is_none() {
+        panic!("Failed inserting new user: Not ID in result");
     }
 
     Ok(Json(json!({ "token": db_user.token })))
@@ -364,12 +373,19 @@ fn post_weight(
         .insert_one(weight_doc.clone(), None)
         .expect("Failed inserting new weight");
 
-    if !insertion.acknowledged || insertion.inserted_id.is_none() {
+    if let Some(write_exception) = insertion.write_exception {
         panic!(
-            "Failed inserting new weight: Acknowleded: {}, ID: {:#?}",
-            insertion.acknowledged,
-            insertion.inserted_id,
+            "Failed inserting new weight: {}",
+            write_exception.description()
         );
+    }
+
+    if !insertion.acknowledged {
+        panic!("Failed inserting new weight: Insertion not acknowleded");
+    }
+
+    if insertion.inserted_id.is_none() {
+        panic!("Failed inserting new weight: Not ID in result");
     }
 
     Ok(Json(json!({})))
