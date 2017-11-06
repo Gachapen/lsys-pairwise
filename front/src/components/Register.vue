@@ -1,7 +1,14 @@
 <template lang="pug">
   .register
+    section.info
+      h2 Information
+      p.
+        During this experiment you will be asked to rate how much more pleasing a plant is
+        compared to another. If they are equally pleasing, select 0. If one plant is more
+        pleasing than the other, select 1, 2 or 3 on the same side as the plant to indicate how
+        much more pleasing it is.
     section.user-info(v-if='!token')
-      h2 Your information
+      h2 Register
       p
         label(for='age')
           span Age:
@@ -14,6 +21,14 @@
           option(value='female') Female
           option(value='male') Male
           option(value='other') Other
+      p
+        label(for='task')
+          span Task:
+        select(id='task' v-model='task')
+          option(value='' disabled) Select
+          option(value='first') First
+          option(value='improve') Improve
+          option(value='experiment') Experiment
       p
         button(@click='register()') Register
     section.begin(v-if='token')
@@ -36,6 +51,7 @@ export default {
       age: undefined,
       gender: '',
       token: null,
+      task: '',
     }
   },
   computed: {
@@ -48,6 +64,7 @@ export default {
       post(`${API_BASE}/user`, {
         age: parseInt(this.age, 10),
         gender: this.gender,
+        task: this.task,
       })
         .then(response => {
           this.token = response.data.token
@@ -61,17 +78,19 @@ export default {
 <style scoped lang="sass">
 .register
   overflow: auto
-  width: 100%
+  width: 800px
   height: 100%
-  margin: 0
+  margin: 0 auto
   padding: 0
-  background: #282828
   color: white
+  text-align: left
 
 section
-  width: 500px
+  >h2
+    text-align: center
+
+section.user-info, section.begin
   margin: 0 auto
-  text-align: left
 
   label
     margin-right: 5px
@@ -89,4 +108,10 @@ section
     border-radius: 3px
     color: white
     text-decoration: none
+
+section.user-info
+  width: 400px
+
+section.begin
+  width: 500px
 </style>

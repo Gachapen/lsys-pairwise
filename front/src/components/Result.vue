@@ -98,7 +98,7 @@ export default {
       return points
     },
     fetchNames () {
-      for (let rank of this.realistic_ranking) {
+      for (let rank of this.pleasing_ranking) {
         get(`${API_BASE}/sample/${rank.name}`)
           .then(response => {
             Vue.set(this.sample_names, rank.name, response.data.name)
@@ -108,24 +108,24 @@ export default {
     },
   },
   created () {
-    get(`${API_BASE}/task/improve/ranking/realistic/user/${this.token}`)
-      .then(response => {
-        this.realistic_ranking = response.data
-        this.fetchNames()
-      })
-      .catch(error => console.error('Failed retrieving realistic ranking', error))
+    // get(`${API_BASE}/task/improve/ranking/realistic/user/${this.token}`)
+    //   .then(response => {
+    //     this.realistic_ranking = response.data
+    //     this.fetchNames()
+    //   })
+    //   .catch(error => console.error('Failed retrieving realistic ranking', error))
 
-    get(`${API_BASE}/task/improve/ranking/pleasing/user/${this.token}`)
+    get(`${API_BASE}/ranking/${this.token}/pleasing`)
       .then(response => {
         this.pleasing_ranking = response.data
       })
       .catch(error => console.error('Failed retrieving pleasing ranking', error))
 
-    get(`${API_BASE}/task/improve/ranking/technical`)
-      .then(response => {
-        this.technical_ranking = response.data
-      })
-      .catch(error => console.error('Failed retrieving technical ranking', error))
+    // get(`${API_BASE}/task/improve/ranking/technical`)
+    //   .then(response => {
+    //     this.technical_ranking = response.data
+    //   })
+    //   .catch(error => console.error('Failed retrieving technical ranking', error))
   },
 }
 </script>

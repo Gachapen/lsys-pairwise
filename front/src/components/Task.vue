@@ -1,18 +1,25 @@
 <template lang="pug">
   .pairwise
-    component(is='comparison' :pair='currentPair' :key='pairId' :realistic.sync='realistic' :pleasing.sync='pleasing')
+    .comparison(v-if='pairs.length > 0')
+      .video-pair
+        .video(v-html='videoA')
+        .video(v-html='videoB')
+      //- comparison-slider.slider.realistic(equal='realistic' more='more realistic' :weight.sync='realistic')
+      comparison-slider.slider.pleasing(equal='pleasing' more='more pleasing' :weight.sync='pleasing' ref='pleasingSlider')
+    .loading(v-else)
+      p Loading...
     button.next(v-if='!isLast' @click='next' :disabled='!canContinue') Next
     button.finish(v-else @click='finish' :disabled='!canContinue') Finish
 </template>
 
 <script>
-import Comparison from './Comparison'
+import ComparisonSlider from './ComparisonSlider'
 import { API_BASE } from '../config'
 import axios, { get, post } from 'axios'
 
 export default {
   components: {
-    Comparison,
+    ComparisonSlider,
   },
   props: {
     token: {
@@ -24,8 +31,9 @@ export default {
     return {
       pairs: [],
       pairIndex: 0,
-      realistic: undefined,
+      // realistic: undefined,
       pleasing: undefined,
+      videoTypes: ['webm', 'mp4'],
     }
   },
   computed: {
@@ -43,10 +51,25 @@ export default {
       return `${this.currentPair.a} ${this.currentPair.b}`
     },
     canContinue () {
-      return this.realistic && this.pleasing
+      // return this.realistic && this.pleasing
+      return this.pleasing
     },
     isLast () {
       return this.pairIndex === this.pairs.length - 1
+    },
+    videoA () {
+      if (this.currentPair.a) {
+        return this.constructVideoElement(this.currentPair.a)
+      } else {
+        return ''
+      }
+    },
+    videoB () {
+      if (this.currentPair.b) {
+        return this.constructVideoElement(this.currentPair.b)
+      } else {
+        return ''
+      }
     },
   },
   methods: {
@@ -61,19 +84,20 @@ export default {
     },
     next () {
       axios.all([
-        this.postWeight('realistic', this.realistic),
+        // this.postWeight('realistic', this.realistic),
         this.postWeight('pleasing', this.pleasing),
       ])
         .then(() => {
           this.pairIndex += 1
-          this.realistic = undefined
+          // this.realistic = undefined
           this.pleasing = undefined
+          this.$refs.pleasingSlider.unselect()
         })
         .catch(error => console.error('Failed posting weights', error))
     },
     finish () {
       axios.all([
-        this.postWeight('realistic', this.realistic),
+        // this.postWeight('realistic', this.realistic),
         this.postWeight('pleasing', this.pleasing),
       ])
         .then(() => {
@@ -81,9 +105,20 @@ export default {
         })
         .catch(error => console.error('Failed posting weights', error))
     },
+    constructVideoElement (sampleId) {
+      const baseSrc = `${API_BASE}/video/${sampleId}`
+
+      let sources = ''
+      for (let type of this.videoTypes) {
+        sources += `<source src='${baseSrc}/${type}' type='video/${type}'>`
+      }
+      sources += `Can't play video; your browser doesn't support HTML5 video in WebM with VP8/VP9 or MP4 with H.264.`
+
+      return `<video autoplay="true" loop="true">${sources}</video>`
+    },
   },
   created () {
-    get(`${API_BASE}/task/improve/user/${this.token}`)
+    get(`${API_BASE}/task/${this.token}`)
       .then(response => {
         this.pairs = response.data
         this.pairIndex = 0
@@ -110,4 +145,41 @@ export default {
     border: 0
     font-size: 12pt
     background: rgb(200, 200, 200)
+
+.comparison
+  background-color: rgb(127, 127, 127)
+  max-width: 1250px
+  margin: 0 auto
+
+  >.video-pair
+    >.video
+      display: inline-block
+      width: auto
+      height: auto
+
+  >.slider
+    background: rgb(137, 137, 137)
+
+  >button.next
+    margin-top: 10px
+    padding: 10px 20px
+    border: 0
+    font-size: 12pt
+    background: rgb(200, 200, 200)
+</style>
+
+<style lang="sass">
+.comparison > .video-pair > .video > video
+  display: block
+  width: auto
+  height: auto
+  margin: 10px
+
+  @media (max-width: 1400px)
+    width: 500px
+    height: 500px
+
+  @media (max-width: 1100px)
+    width: 300px
+    height: 300px
 </style>

@@ -1,9 +1,17 @@
 <template lang="pug">
   .comparison-slider
-    template(v-for='point in points')
-      label
-        input(type='radio' :name='equal' :value='point.weight' v-model='weight')
-        | {{ point.label }}
+    .headings
+      .left
+        h4 Left is {{ more }}
+      .equal
+        h4 Equally {{ equal }}
+      .right
+        h4 Right is {{ more }}
+    .slider
+      template(v-for='point in points')
+        label
+          input(type='radio' :name='equal' :value='point.weight' v-model='weight')
+          | {{ point.label }}
 </template>
 
 <script>
@@ -27,40 +35,32 @@ export default {
     points () {
       return [
         {
-          weight: 1 / 9,
-          label: `Extremely ${this.more}`,
+          weight: 1 / (1 + (8/3 * 3)),
+          label: '3'
         },
         {
-          weight: 1 / 7,
-          label: `Far ${this.more}`,
+          weight: 1 / (1 + (8/3 * 2)),
+          label: '2',
         },
         {
-          weight: 1 / 5,
-          label: `Much ${this.more}`,
-        },
-        {
-          weight: 1 / 3,
-          label: `Slightly ${this.more}`,
+          weight: 1 / (1 + (8/3 * 1)),
+          label: '1',
         },
         {
           weight: 1,
-          label: `Equally ${this.equal}`,
+          label: '0',
         },
         {
-          weight: 3,
-          label: `Slightly ${this.more}`,
+          weight: 1 + (8/3 * 1),
+          label: '1'
         },
         {
-          weight: 5,
-          label: `Much ${this.more}`,
+          weight: 1 + (8/3 * 2),
+          label: '2',
         },
         {
-          weight: 7,
-          label: `Far ${this.more}`,
-        },
-        {
-          weight: 9,
-          label: `Extremely ${this.more}`,
+          weight: 1 + (8/3 * 3),
+          label: '3',
         },
       ]
     },
@@ -70,25 +70,37 @@ export default {
       this.$emit('update:weight', val)
     },
   },
+  methods: {
+    unselect () {
+      this.weight = undefined
+    }
+  },
 }
 </script>
 
 <style scoped lang="sass">
 .comparison-slider
-  >label
-    display: inline-block
-    width: 80px
-    vertical-align: top
-    margin: 0 30px
+  padding: 15px
 
-    &:first-child
-      margin-left: 0px
+  >.headings
+    width: 100%
+    display: flex
+    justify-content: space-evenly
 
-    &:last-child
-      margin-right: 0px
+    h4
+      margin-top: 10px
 
-    >input
-      display: block
-      margin: 0 auto
-      margin-bottom: 5px
+  >.slider
+    width: 100%
+    display: flex
+    justify-content: space-around
+
+    >label
+      vertical-align: top
+      width: 100%
+
+      >input
+        display: block
+        margin: 0 auto
+        margin-bottom: 5px
 </style>
