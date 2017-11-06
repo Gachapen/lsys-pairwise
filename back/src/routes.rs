@@ -65,6 +65,7 @@ impl Into<RequestErrorResponse> for RequestError {
 struct User {
     age: u8,
     gender: Gender,
+    task: String,
 }
 
 impl From<User> for db::User {
@@ -73,6 +74,7 @@ impl From<User> for db::User {
             age: i32::from(user.age),
             gender: user.gender,
             token: format!("{}", Uuid::new_v4().simple()),
+            task: user.task,
         }
     }
 }
@@ -111,8 +113,27 @@ fn index() -> Json {
 }
 
 #[post("/user", data = "<user>")]
-fn post_user(user: Json<User>, db_client: State<mongodb::Client>) -> Result<Json, Json> {
+fn post_user(
+    user: Json<User>,
+    db_client: State<mongodb::Client>,
+) -> Result<Json, RequestErrorResponse> {
     let db_user: db::User = user.into_inner().into();
+
+    let sample_res = db_client
+        .db(db::NAME)
+        .collection(db::COLLECTION_SAMPLE)
+        .find_one(
+            Some(doc! {
+                "task": &db_user.task,
+            }),
+            None,
+        )
+        .expect("Failed retrieving samples");
+
+    if sample_res.is_none() {
+        return Err(RequestError::new("Task not found").into());
+    }
+
     let user_bson = to_bson(&db_user).unwrap();
     let user_doc = user_bson.as_document().unwrap();
     let insertion = db_client
@@ -136,12 +157,12 @@ struct Pair {
     b: String,
 }
 
-#[get("/task/<task>/user/<user>")]
+#[get("/task/<user>")]
 fn get_task(
-    task: &RawStr,
     user: &RawStr,
     db_client: State<mongodb::Client>,
-) -> Result<Json<Vec<Pair>>, Json> {
+) -> Result<Json<Vec<Pair>>, RequestErrorResponse> {
+    let task = get_users_task(user, &db_client)?;
     let sample_cursor = db_client
         .db(db::NAME)
         .collection(db::COLLECTION_SAMPLE)
@@ -210,15 +231,16 @@ fn get_task(
     Ok(Json(pairs))
 }
 
-#[get("/task/<task>/ranking/<metric>/user/<user>")]
+#[get("/ranking/<user>/<metric>")]
 fn get_criteria_weights(
-    task: &RawStr,
-    metric: Metric,
     user: &RawStr,
+    metric: Metric,
     db_client: State<mongodb::Client>,
-) -> Result<Json<Vec<SampleWeight>>, Json> {
+) -> Result<Json<Vec<SampleWeight>>, RequestErrorResponse> {
+    let task = get_users_task(user, &db_client)?;
+
     Ok(Json(stats::calculate_sample_weights(
-        task,
+        &task,
         user,
         &metric,
         &db_client,
@@ -382,5 +404,30 @@ fn get_sample(
         Ok(Json(sample))
     } else {
         return Err(RequestError::with_status(Status::NotFound, "Sample not found").into());
+    }
+}
+
+fn get_users_task(
+    user_token: &str,
+    db_client: &mongodb::Client,
+) -> Result<String, RequestErrorResponse> {
+    let user_res = db_client
+        .db(db::NAME)
+        .collection(db::COLLECTION_USER)
+        .find_one(
+            Some(doc! {
+                "token": user_token,
+            }),
+            None,
+        )
+        .expect("Failed retrieving user");
+
+    match user_res {
+        Some(user_doc) => {
+            let user: db::User =
+                from_bson(Bson::from(user_doc)).expect("Failed deserializing User");
+            Ok(user.task)
+        }
+        None => Err(RequestError::with_status(Status::NotFound, "User not found").into()),
     }
 }
