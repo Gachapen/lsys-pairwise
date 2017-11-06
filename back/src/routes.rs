@@ -1,5 +1,6 @@
 use bson::{from_bson, to_bson, Bson};
 use bson::oid::{self, ObjectId};
+use chrono::Utc;
 use mongodb::{self, ThreadedClient};
 use mongodb::db::ThreadedDatabase;
 use mongodb::coll::options::FindOptions;
@@ -75,6 +76,7 @@ impl From<User> for db::User {
             gender: user.gender,
             token: format!("{}", Uuid::new_v4().simple()),
             task: user.task,
+            register_date: Utc::now().naive_utc(),
         }
     }
 }

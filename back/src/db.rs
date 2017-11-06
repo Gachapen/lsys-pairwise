@@ -1,4 +1,5 @@
 use bson::oid::ObjectId;
+use chrono::NaiveDateTime;
 use mongodb::{self, Client, ThreadedClient};
 use mongodb::error::Error;
 use mongodb::db::ThreadedDatabase;
@@ -19,6 +20,7 @@ pub struct User {
     pub gender: Gender,
     pub token: String,
     pub task: String,
+    pub register_date: NaiveDateTime,
 }
 
 #[derive(Serialize, Deserialize)]

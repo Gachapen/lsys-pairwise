@@ -96,6 +96,7 @@ version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "num 0.1.40 (registry+https://github.com/rust-lang/crates.io-index)",
+ "serde 1.0.16 (registry+https://github.com/rust-lang/crates.io-index)",
  "time 0.1.38 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
@@ -298,6 +299,7 @@ name = "lsys-pairwise"
 version = "0.1.0"
 dependencies = [
  "bson 0.10.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "chrono 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "clap 2.27.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "mongodb 0.3.7 (registry+https://github.com/rust-lang/crates.io-index)",
  "nalgebra 0.13.1 (registry+https://github.com/rust-lang/crates.io-index)",

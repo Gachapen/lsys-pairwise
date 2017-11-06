@@ -3,6 +3,7 @@
 
 #[macro_use]
 extern crate bson;
+extern crate chrono;
 extern crate clap;
 extern crate mongodb;
 extern crate nalgebra as na;
