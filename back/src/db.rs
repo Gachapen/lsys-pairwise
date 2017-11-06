@@ -120,21 +120,15 @@ pub fn missing_measurement(
     id_b: &ObjectId,
     db_client: &Client,
 ) -> Result<bool, Error> {
-    let doc = db_client.db(NAME).collection(COLLECTION_WEIGHT).find_one(
+    let collection = db_client.db(NAME).collection(COLLECTION_WEIGHT);
+
+    let doc_a = collection.find_one(
         Some(doc! {
             "token": user_token,
-            "metric": {
-                "$in": [
-                    serde_enum::to_string(&Metric::Realistic).unwrap(),
-                    serde_enum::to_string(&Metric::Pleasing).unwrap(),
-                ],
-            },
-            "a": {
-                "$in": [id_a.clone(), id_b.clone()],
-            },
-            "b": {
-                "$in": [id_b.clone(), id_a.clone()],
-            },
+            // FIXME: This is a hack to support only the pleasing metric.
+            "metric": serde_enum::to_string(&Metric::Pleasing).unwrap(),
+            "a": id_a.clone(),
+            "b": id_b.clone(),
         }),
         Some(FindOptions {
             projection: Some(doc! {
@@ -144,5 +138,25 @@ pub fn missing_measurement(
         }),
     )?;
 
-    Ok(doc.is_none())
+    if doc_a.is_some() {
+        return Ok(false);
+    }
+
+    let doc_b = collection.find_one(
+        Some(doc! {
+            "token": user_token,
+            // FIXME: This is a hack to support only the pleasing metric.
+            "metric": serde_enum::to_string(&Metric::Pleasing).unwrap(),
+            "a": id_b.clone(),
+            "b": id_a.clone(),
+        }),
+        Some(FindOptions {
+            projection: Some(doc! {
+                "_id": 0,
+            }),
+            ..Default::default()
+        }),
+    )?;
+
+    Ok(doc_b.is_none())
 }
