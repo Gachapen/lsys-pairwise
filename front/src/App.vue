@@ -15,6 +15,9 @@ const router = new VueRouter({
     {
       path: '/',
       component: Register,
+      props: route => ({
+        initialTask: route.query.task,
+      }),
     },
     {
       path: '/task/:token',

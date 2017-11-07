@@ -45,12 +45,19 @@ import { post, get } from 'axios'
 import { API_BASE } from '../config'
 
 export default {
+  props: {
+    initialTask: {
+      type: String,
+      required: false,
+      default: '',
+    },
+  },
   data () {
     return {
       age: undefined,
       gender: '',
       token: null,
-      task: '',
+      task: this.initialTask,
       tasks: [],
     }
   },
