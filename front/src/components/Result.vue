@@ -26,19 +26,19 @@
         .point(v-for='(point, index) of pleasing_points' :style='{ left: point * 100 + "%" }')
           .circle
           .label {{ index + 1 }}
-    .metric.technical
-      h2 Technical evaluation
-      .video(v-for='(rank, index) of technical_ranking')
-        h4 {{ index + 1 }}.
-        video(autoplay loop :title='sample_names[rank.name]')
-          source(:src='webmUrl(rank.name)' type='video/webm')
-          source(:src='mp4Url(rank.name)' type='video/mp4')
-          | Can't play video; your browser doesn't support HTML5 video in WebM with VP8/VP9 or MP4 with H.264.
-      .plot
-        .line
-        .point(v-for='(point, index) of technical_points' :style='{ left: point * 100 + "%" }')
-          .circle
-          .label {{ index + 1 }}
+    //- .metric.technical
+    //-   h2 Technical evaluation
+    //-   .video(v-for='(rank, index) of technical_ranking')
+    //-     h4 {{ index + 1 }}.
+    //-     video(autoplay loop :title='sample_names[rank.name]')
+    //-       source(:src='webmUrl(rank.name)' type='video/webm')
+    //-       source(:src='mp4Url(rank.name)' type='video/mp4')
+    //-       | Can't play video; your browser doesn't support HTML5 video in WebM with VP8/VP9 or MP4 with H.264.
+    //-   .plot
+    //-     .line
+    //-     .point(v-for='(point, index) of technical_points' :style='{ left: point * 100 + "%" }')
+    //-       .circle
+    //-       .label {{ index + 1 }}
 </template>
 
 <script>
