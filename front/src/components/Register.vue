@@ -26,9 +26,7 @@
           span Task:
         select(id='task' v-model='task')
           option(value='' disabled) Select
-          option(value='first') First
-          option(value='improve') Improve
-          option(value='experiment') Experiment
+          option(v-for='task of tasks' :value='task') {{ task | capitalize }}
       p
         button(@click='register()') Register
     section.begin(v-if='token')
@@ -42,7 +40,7 @@
 </template>
 
 <script>
-import { post } from 'axios'
+import { post, get } from 'axios'
 import { API_BASE } from '../config'
 
 export default {
@@ -52,6 +50,7 @@ export default {
       gender: '',
       token: null,
       task: '',
+      tasks: [],
     }
   },
   computed: {
@@ -71,6 +70,13 @@ export default {
         })
         .catch(error => console.error('Failed registering user', error))
     },
+  },
+  created () {
+    get(`${API_BASE}/task`)
+      .then(response => {
+        this.tasks = response.data
+      })
+      .catch(error => console.error('Failed retrieving tasks', error))
   },
 }
 </script>
