@@ -97,6 +97,7 @@ pub fn routes() -> Vec<Route> {
     routes![
         index,
         post_user,
+        get_tasks,
         get_task,
         get_criteria_weights,
         get_video,
@@ -160,6 +161,26 @@ fn post_user(
     }
 
     Ok(Json(json!({ "token": db_user.token })))
+}
+
+#[get("/task")]
+fn get_tasks(db_client: State<mongodb::Client>) -> Result<Json<Vec<String>>, RequestErrorResponse> {
+    let task_bsons = db_client
+        .db(db::NAME)
+        .collection(db::COLLECTION_SAMPLE)
+        .distinct("task", None, None)
+        .expect("Failed retrieving samples");
+
+    let tasks: Vec<String> = task_bsons
+        .iter()
+        .map(|bson_value| bson_value.as_str())
+        .collect::<Option<Vec<&str>>>()
+        .expect("Some task fields were not strings")
+        .into_iter()
+        .map(|s| s.to_string())
+        .collect();
+
+    Ok(Json(tasks))
 }
 
 #[derive(Serialize)]
