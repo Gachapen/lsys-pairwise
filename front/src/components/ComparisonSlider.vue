@@ -48,7 +48,7 @@ export default {
         },
         {
           weight: 1,
-          label: '0',
+          label: '=',
         },
         {
           weight: 1 + (8/3 * 1),

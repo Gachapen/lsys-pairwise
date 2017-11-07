@@ -4,8 +4,8 @@
       h2 Information
       p.
         During this experiment you will be asked to rate how much more pleasing a plant is
-        compared to another. If they are equally pleasing, select 0. If one plant is more
-        pleasing than the other, select 1, 2 or 3 on the same side as the plant to indicate how
+        compared to another. If they are equally pleasing, select '='. If one plant is more
+        pleasing than the other, select 1, 2 or 3 on the same side as that plant to indicate how
         much more pleasing it is.
     section.user-info(v-if='!token')
       h2 Register

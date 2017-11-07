@@ -5,7 +5,7 @@
         .video(v-html='videoA')
         .video(v-html='videoB')
       //- comparison-slider.slider.realistic(equal='realistic' more='more realistic' :weight.sync='realistic')
-      comparison-slider.slider.pleasing(equal='pleasing' more='more pleasing' :weight.sync='pleasing' ref='pleasingSlider')
+      comparison-slider.slider.pleasing(equal='(dis)pleasing' more='more pleasing' :weight.sync='pleasing' ref='pleasingSlider')
     .loading(v-else)
       p Loading...
     button.next(v-if='!isLast' @click='next' :disabled='!canContinue') Next
