@@ -14,7 +14,7 @@ impl Config {
     pub fn from_env() -> Config {
         Config {
             db: Db {
-                host: env::var("CORINOR_DB_HOST").unwrap_or_else(|_| "localhost".to_string()),
+                host: env::var("LSYS_DB_HOST").unwrap_or_else(|_| "localhost".to_string()),
             },
         }
     }
