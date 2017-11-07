@@ -1,0 +1,21 @@
+version: '3'
+services:
+  db:
+    image: mongo:3.4
+    volumes:
+      - db:/data/db
+  api:
+    build: .
+    image: lsys-pairwise-server:latest
+    environment:
+      ROCKET_SECRET_KEY:
+      LSYS_DB_HOST: db
+    volumes:
+      - task:/data/task
+    links:
+      - db
+    ports:
+      - 80:80
+volumes:
+  db:
+  task:

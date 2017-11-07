@@ -1,0 +1,25 @@
+version: '3'
+services:
+  web:
+    build: front
+    image: registry.gitlab.com/gachapen/lsys-pairwise/web:${LSYS_VERSION}
+  api:
+    build: back
+    image: registry.gitlab.com/gachapen/lsys-pairwise/api:${LSYS_VERSION}
+    environment:
+      ROCKET_SECRET_KEY:
+      LSYS_DB_HOST: db
+    links:
+      - db
+  db:
+    image: mongo:3.4
+    volumes:
+      - db:/data/db
+  proxy:
+    build: proxy
+    image: registry.gitlab.com/gachapen/lsys-pairwise/proxy:${LSYS_VERSION}
+    links:
+      - web
+      - api
+volumes:
+  db:
