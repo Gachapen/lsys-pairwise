@@ -35,15 +35,15 @@ export default {
     points () {
       return [
         {
-          weight: 1 / (1 + (8/3 * 3)),
-          label: '3'
+          weight: 1 / (1 + (8 / 3 * 3)),
+          label: '3',
         },
         {
-          weight: 1 / (1 + (8/3 * 2)),
+          weight: 1 / (1 + (8 / 3 * 2)),
           label: '2',
         },
         {
-          weight: 1 / (1 + (8/3 * 1)),
+          weight: 1 / (1 + (8 / 3 * 1)),
           label: '1',
         },
         {
@@ -51,15 +51,15 @@ export default {
           label: '=',
         },
         {
-          weight: 1 + (8/3 * 1),
-          label: '1'
+          weight: 1 + (8 / 3 * 1),
+          label: '1',
         },
         {
-          weight: 1 + (8/3 * 2),
+          weight: 1 + (8 / 3 * 2),
           label: '2',
         },
         {
-          weight: 1 + (8/3 * 3),
+          weight: 1 + (8 / 3 * 3),
           label: '3',
         },
       ]
@@ -73,7 +73,7 @@ export default {
   methods: {
     unselect () {
       this.weight = undefined
-    }
+    },
   },
 }
 </script>
