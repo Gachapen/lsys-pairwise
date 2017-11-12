@@ -94,6 +94,7 @@ pub fn routes() -> Vec<Route> {
         get_technical_ranking,
         put_pre_questionnaire,
         put_post_questionnaire,
+        get_user_task,
     ]
 }
 
@@ -227,6 +228,42 @@ fn put_post_questionnaire(
     }
 
     Ok(())
+}
+
+#[get("/user/<user_token>/task")]
+fn get_user_task(
+    user_token: &RawStr,
+    db_client: State<mongodb::Client>,
+) -> Result<Json, RequestErrorResponse> {
+    let user_res = db_client
+        .db(db::NAME)
+        .collection(db::COLLECTION_USER)
+        .find_one(
+            Some(doc! {
+                "token": user_token.as_str(),
+            }),
+            Some(FindOptions {
+                projection: Some(doc! {
+                    "task": 1,
+                    "_id": 0,
+                }),
+                ..Default::default()
+            }),
+        )
+        .expect("Failed finding user");
+
+    let user_doc = match user_res {
+        Some(doc) => doc,
+        None => return Err(RequestError::not_found("User not found").into()),
+    };
+
+    let task = user_doc
+        .get_str("task")
+        .expect("User did not have 'task' field");
+
+    Ok(Json(json!({
+        "task": task.to_string()
+    })))
 }
 
 #[get("/task")]
