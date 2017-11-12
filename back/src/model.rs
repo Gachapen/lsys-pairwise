@@ -111,3 +111,11 @@ pub struct PreQuestionnaire {
     plant_like: Likert5,
     video_game: Likert5,
 }
+
+#[derive(Deserialize)]
+pub struct User {
+    pub age: u8,
+    pub gender: Gender,
+    pub task: String,
+    pub pre_questionnaire: Option<PreQuestionnaire>,
+}

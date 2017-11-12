@@ -1,9 +1,10 @@
 use bson::oid::ObjectId;
-use chrono::NaiveDateTime;
+use chrono::{NaiveDateTime, Utc};
 use mongodb::{self, Client, ThreadedClient};
 use mongodb::error::Error;
 use mongodb::db::ThreadedDatabase;
 use mongodb::coll::options::{FindOptions, IndexModel, IndexOptions};
+use uuid::Uuid;
 
 use serde_enum;
 use model::{self, Gender, Metric, PostQuestionnaire, PreQuestionnaire};
@@ -25,6 +26,20 @@ pub struct User {
     pub post_questionnaire: Option<PostQuestionnaire>,
 }
 
+impl From<model::User> for User {
+    fn from(user: model::User) -> User {
+        User {
+            age: i32::from(user.age),
+            gender: user.gender,
+            token: format!("{}", Uuid::new_v4().simple()),
+            task: user.task,
+            register_date: Utc::now().naive_utc(),
+            pre_questionnaire: user.pre_questionnaire,
+            post_questionnaire: None,
+        }
+    }
+}
+
 #[derive(Serialize, Deserialize)]
 pub struct Weighting {
     pub token: String,
@@ -32,6 +47,7 @@ pub struct Weighting {
     pub a: ObjectId,
     pub b: ObjectId,
     pub weight: f32,
+    pub time: NaiveDateTime,
 }
 
 impl From<model::Weighting> for Weighting {
@@ -42,6 +58,7 @@ impl From<model::Weighting> for Weighting {
             a: ObjectId::with_string(&weighting.a).unwrap(),
             b: ObjectId::with_string(&weighting.b).unwrap(),
             weight: weighting.weight,
+            time: Utc::now().naive_utc(),
         }
     }
 }

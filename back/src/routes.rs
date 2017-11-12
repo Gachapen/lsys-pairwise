@@ -1,6 +1,5 @@
 use bson::{from_bson, to_bson, Bson};
 use bson::oid::{self, ObjectId};
-use chrono::Utc;
 use mongodb::{self, ThreadedClient};
 use mongodb::db::ThreadedDatabase;
 use mongodb::coll::options::FindOptions;
@@ -15,8 +14,7 @@ use std::error::Error;
 use std::path::Path;
 
 use db;
-use model::{Gender, Metric, PostQuestionnaire, PreQuestionnaire, Sample, Weighting};
-use uuid::Uuid;
+use model::{Metric, PostQuestionnaire, PreQuestionnaire, Sample, User, Weighting};
 use stats::{self, SampleWeight};
 use serde_enum;
 
@@ -67,28 +65,6 @@ type RequestErrorResponse = status::Custom<Json<RequestError>>;
 impl Into<RequestErrorResponse> for RequestError {
     fn into(self) -> RequestErrorResponse {
         status::Custom(self.status, Json(self))
-    }
-}
-
-#[derive(Deserialize)]
-struct User {
-    age: u8,
-    gender: Gender,
-    task: String,
-    pre_questionnaire: Option<PreQuestionnaire>,
-}
-
-impl From<User> for db::User {
-    fn from(user: User) -> db::User {
-        db::User {
-            age: i32::from(user.age),
-            gender: user.gender,
-            token: format!("{}", Uuid::new_v4().simple()),
-            task: user.task,
-            register_date: Utc::now().naive_utc(),
-            pre_questionnaire: user.pre_questionnaire,
-            post_questionnaire: None,
-        }
     }
 }
 
