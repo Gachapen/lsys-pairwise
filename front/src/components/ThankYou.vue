@@ -2,6 +2,7 @@
   .thanks
     section
       h1 Thank you for participating!
+      .confetti 🎊
       .links
         .link
           i.fa.fa-bookmark
@@ -53,4 +54,7 @@ section
 .link.share > a
   font-weight: bold
   font-size: 14pt
+
+.confetti
+  font-size: 200px
 </style>
