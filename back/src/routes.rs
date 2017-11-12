@@ -15,7 +15,7 @@ use std::error::Error;
 use std::path::Path;
 
 use db;
-use model::{Gender, Metric, Sample, Weighting};
+use model::{Gender, Metric, PostQuestionnaire, PreQuestionnaire, Sample, Weighting};
 use uuid::Uuid;
 use stats::{self, SampleWeight};
 use serde_enum;
@@ -44,6 +44,14 @@ impl RequestError {
         }
     }
 
+    fn not_found(error: &str) -> RequestError {
+        RequestError {
+            status: Status::NotFound,
+            error: error.to_string(),
+            details: None,
+        }
+    }
+
     #[allow(dead_code)]
     fn with_description(status: Status, error: &str, description: String) -> RequestError {
         RequestError {
@@ -67,6 +75,7 @@ struct User {
     age: u8,
     gender: Gender,
     task: String,
+    pre_questionnaire: Option<PreQuestionnaire>,
 }
 
 impl From<User> for db::User {
@@ -77,6 +86,8 @@ impl From<User> for db::User {
             token: format!("{}", Uuid::new_v4().simple()),
             task: user.task,
             register_date: Utc::now().naive_utc(),
+            pre_questionnaire: user.pre_questionnaire,
+            post_questionnaire: None,
         }
     }
 }
@@ -104,6 +115,8 @@ pub fn routes() -> Vec<Route> {
         post_weight,
         get_sample,
         get_technical_ranking,
+        put_pre_questionnaire,
+        put_post_questionnaire,
     ]
 }
 
@@ -161,6 +174,82 @@ fn post_user(
     }
 
     Ok(Json(json!({ "token": db_user.token })))
+}
+
+#[put("/user/<user_token>/pre", data = "<questionnaire>")]
+fn put_pre_questionnaire(
+    user_token: &RawStr,
+    questionnaire: Json<PreQuestionnaire>,
+    db_client: State<mongodb::Client>,
+) -> Result<(), RequestErrorResponse> {
+    let questionnaire_doc = to_bson(&questionnaire.into_inner()).unwrap();
+    let update_res = db_client
+        .db(db::NAME)
+        .collection(db::COLLECTION_USER)
+        .update_one(
+            doc! {
+                "token": user_token.as_str(),
+            },
+            doc! {
+                "$set": {
+                    "pre_questionnaire": questionnaire_doc,
+                },
+            },
+            None,
+        )
+        .expect("Failed updating user");
+
+    if let Some(write_exception) = update_res.write_exception {
+        panic!("Failed updating user: {}", write_exception.description());
+    }
+
+    if !update_res.acknowledged {
+        panic!("Failed updating user: Update not acknowleded");
+    }
+
+    if update_res.matched_count == 0 {
+        return Err(RequestError::not_found("User not found").into());
+    }
+
+    Ok(())
+}
+
+#[put("/user/<user_token>/post", data = "<questionnaire>")]
+fn put_post_questionnaire(
+    user_token: &RawStr,
+    questionnaire: Json<PostQuestionnaire>,
+    db_client: State<mongodb::Client>,
+) -> Result<(), RequestErrorResponse> {
+    let questionnaire_doc = to_bson(&questionnaire.into_inner()).unwrap();
+    let update_res = db_client
+        .db(db::NAME)
+        .collection(db::COLLECTION_USER)
+        .update_one(
+            doc! {
+                "token": user_token.as_str(),
+            },
+            doc! {
+                "$set": {
+                    "post_questionnaire": questionnaire_doc,
+                },
+            },
+            None,
+        )
+        .expect("Failed updating user");
+
+    if let Some(write_exception) = update_res.write_exception {
+        panic!("Failed updating user: {}", write_exception.description());
+    }
+
+    if !update_res.acknowledged {
+        panic!("Failed updating user: Update not acknowleded");
+    }
+
+    if update_res.matched_count == 0 {
+        return Err(RequestError::not_found("User not found").into());
+    }
+
+    Ok(())
 }
 
 #[get("/task")]
@@ -443,7 +532,7 @@ fn get_sample(
         let sample = from_bson(Bson::from(sample_doc)).expect("Failed deserializing Sample");
         Ok(Json(sample))
     } else {
-        return Err(RequestError::with_status(Status::NotFound, "Sample not found").into());
+        return Err(RequestError::not_found("Sample not found").into());
     }
 }
 
@@ -468,6 +557,6 @@ fn get_users_task(
                 from_bson(Bson::from(user_doc)).expect("Failed deserializing User");
             Ok(user.task)
         }
-        None => Err(RequestError::with_status(Status::NotFound, "User not found").into()),
+        None => Err(RequestError::not_found("User not found").into()),
     }
 }

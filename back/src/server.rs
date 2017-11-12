@@ -40,7 +40,7 @@ pub fn run() {
 
         let options = Cors {
             allowed_origins: allowed_origins,
-            allowed_methods: vec![Method::Get, Method::Post]
+            allowed_methods: vec![Method::Get, Method::Post, Method::Put]
                 .into_iter()
                 .map(From::from)
                 .collect(),

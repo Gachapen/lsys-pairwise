@@ -6,7 +6,7 @@ use mongodb::db::ThreadedDatabase;
 use mongodb::coll::options::{FindOptions, IndexModel, IndexOptions};
 
 use serde_enum;
-use model::{self, Gender, Metric};
+use model::{self, Gender, Metric, PostQuestionnaire, PreQuestionnaire};
 use cfg;
 
 pub const NAME: &str = "lsys-pairwise";
@@ -21,6 +21,8 @@ pub struct User {
     pub token: String,
     pub task: String,
     pub register_date: NaiveDateTime,
+    pub pre_questionnaire: Option<PreQuestionnaire>,
+    pub post_questionnaire: Option<PostQuestionnaire>,
 }
 
 #[derive(Serialize, Deserialize)]
