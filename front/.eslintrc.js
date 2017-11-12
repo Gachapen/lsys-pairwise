@@ -23,5 +23,6 @@ module.exports = {
     'comma-dangle': ['warn', 'always-multiline'],
     'space-infix-ops': 'warn',
     'no-unused-vars': 'warn',
+    'indent': 'warn',
   }
 }
