@@ -112,7 +112,7 @@ export default {
       for (let type of this.videoTypes) {
         sources += `<source src='${baseSrc}/${type}' type='video/${type}'>`
       }
-      sources += `Can't play video; your browser doesn't support HTML5 video in WebM with VP8/VP9 or MP4 with H.264.`
+      sources += `Can't play video; your browser doesn't support HTML5 video in WebM with VP9 or MP4 with H.264.`
 
       return `<video autoplay="true" loop="true">${sources}</video>`
     },
