@@ -34,6 +34,7 @@ impl RequestError {
         }
     }
 
+    #[allow(dead_code)]
     fn with_status(status: Status, error: &str) -> RequestError {
         RequestError {
             status: status,
