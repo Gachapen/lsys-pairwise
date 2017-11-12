@@ -63,6 +63,9 @@ export default {
 </script>
 
 <style lang="sass">
+$fa-font-path: '~font-awesome/fonts'
+@import '~font-awesome/scss/font-awesome'
+
 html, body, #app
   width: 100%
   height: 100%
