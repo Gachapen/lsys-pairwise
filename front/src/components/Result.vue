@@ -17,23 +17,24 @@
             .circle
             .label {{ index + 1 }}
       .loading(v-else) Loading...
-    section.questionaire
-      h2 Post-questionaire
-      section
-        likert-scale(
-          statement='I agree with the ranking of the plants shown above'
-          scale='agreement'
-          v-model='agree'
-        )
-      section
-        h4 What would you say differentiates good plants vs bad plants in the above ranking?
-        textarea(v-model='differentiates')
-      section
-        h4 Other comments?
-        textarea(v-model='comments')
-    section.submit
-      p
-        button(@click='submit()') Submit
+    template(v-if='questions')
+      section.questionaire
+        h2 Post-questionaire
+        section
+          likert-scale(
+            statement='I agree with the ranking of the plants shown above'
+            scale='agreement'
+            v-model='agree'
+          )
+        section
+          h4 What would you say differentiates good plants vs bad plants in the above ranking?
+          textarea(v-model='differentiates')
+        section
+          h4 Other comments?
+          textarea(v-model='comments')
+      section.submit
+        p
+          button(@click='submit()') Submit
 </template>
 
 <script>
@@ -51,6 +52,11 @@ export default {
     token: {
       type: String,
       required: true,
+    },
+    questions: {
+      type: Boolean,
+      required: false,
+      default: true,
     },
   },
   data () {

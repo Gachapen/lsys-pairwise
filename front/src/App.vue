@@ -11,6 +11,7 @@ import Register from './components/Register'
 import Intro from './components/Intro'
 import Task from './components/Task'
 import Result from './components/Result'
+import ThankYou from './components/ThankYou'
 
 const router = new VueRouter({
   routes: [
@@ -41,6 +42,15 @@ const router = new VueRouter({
       name: 'result',
       path: '/result/:token',
       component: Result,
+      props: route => ({
+        questions: !route.query['no-questions'],
+        token: route.params.token,
+      }),
+    },
+    {
+      name: 'thanks',
+      path: '/thanks/:token',
+      component: ThankYou,
       props: true,
     },
   ],
