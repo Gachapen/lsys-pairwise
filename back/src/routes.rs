@@ -320,7 +320,7 @@ fn get_technical_ranking(
 
     let normalizer = 1.0 / weights.iter().map(|weight| weight.weight).sum::<f32>();
     for weight in &mut weights {
-        weight.weight = weight.weight * normalizer;
+        weight.weight *= normalizer;
     }
     weights.sort_by(|a, b| b.weight.partial_cmp(&a.weight).unwrap());
 
@@ -329,7 +329,7 @@ fn get_technical_ranking(
 
 #[get("/video/<id>/<ext>")]
 fn get_video(id: &RawStr, ext: &RawStr, db_client: State<mongodb::Client>) -> Option<NamedFile> {
-    let object_id = match ObjectId::with_string(&id) {
+    let object_id = match ObjectId::with_string(id) {
         Ok(object_id) => object_id,
         Err(_) => return None,
     };

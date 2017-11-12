@@ -9,10 +9,10 @@ use serde_enum;
 use model::{self, Gender, Metric};
 use cfg;
 
-pub const NAME: &'static str = "lsys-pairwise";
-pub const COLLECTION_SAMPLE: &'static str = "sample";
-pub const COLLECTION_USER: &'static str = "user";
-pub const COLLECTION_WEIGHT: &'static str = "weight";
+pub const NAME: &str = "lsys-pairwise";
+pub const COLLECTION_SAMPLE: &str = "sample";
+pub const COLLECTION_USER: &str = "user";
+pub const COLLECTION_WEIGHT: &str = "weight";
 
 #[derive(Serialize, Deserialize)]
 pub struct User {
@@ -107,7 +107,7 @@ pub fn init(db_client: &mongodb::Client) -> mongodb::Result<()> {
 }
 
 pub fn connect(db_cfg: &cfg::Db) -> Client {
-    let client = Client::connect(&db_cfg.host, 27017)
+    let client = Client::connect(&db_cfg.host, 27_017)
         .expect(&format!("Failed to connect to DB at {}", db_cfg.host));
     println!("Connected to MongoDB at {}", db_cfg.host);
 

@@ -38,7 +38,7 @@ pub fn calculate_sample_weights(
 }
 
 pub fn print_stats(task: &str, token: &str, metric: &Metric, cfg: &cfg::Db) {
-    let db_client = db::connect(&cfg);
+    let db_client = db::connect(cfg);
     let db = db_client.db(db::NAME);
 
     let sample_set = get_sample_set(task, &db);
@@ -54,7 +54,7 @@ pub fn print_stats(task: &str, token: &str, metric: &Metric, cfg: &cfg::Db) {
     println!("Criteria weights: {}", criteria_weights);
 
     let sample_weights = make_sample_weights(&criteria_weights, &sample_set.ids);
-    for &SampleWeight { ref name, weight } in sample_weights.iter() {
+    for &SampleWeight { ref name, weight } in &sample_weights {
         println!("{} <= {}", name, weight);
     }
 }

@@ -1,5 +1,7 @@
 #![feature(plugin)]
 #![plugin(rocket_codegen)]
+#![allow(unknown_lints)]
+#![allow(needless_pass_by_value)] // Because of Rocket passing things like State<T> as values
 
 #[macro_use]
 extern crate bson;

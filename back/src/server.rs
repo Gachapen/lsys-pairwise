@@ -16,7 +16,7 @@ use db;
 use model::Sample;
 use routes::routes;
 
-const VIDEOS_PATH: &'static str = "./task";
+const VIDEOS_PATH: &str = "./task";
 
 pub fn run() {
     let config = Config::from_env();
