@@ -8,6 +8,7 @@
 import VueRouter from 'vue-router'
 import Consent from './components/Consent'
 import Register from './components/Register'
+import Intro from './components/Intro'
 import Task from './components/Task'
 import Result from './components/Result'
 
@@ -25,6 +26,13 @@ const router = new VueRouter({
       }),
     },
     {
+      name: 'intro',
+      path: '/intro/:token',
+      component: Intro,
+      props: true,
+    },
+    {
+      name: 'task',
       path: '/task/:token',
       component: Task,
       props: true,

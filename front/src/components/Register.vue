@@ -1,15 +1,8 @@
 <template lang="pug">
   .register
-    section.info
-      h2 Information
-      p.
-        During this experiment you will be asked to rate how much more aesthetically pleasing a plant is
-        compared to another. If they are equally pleasing, select '='. If one plant is more
-        pleasing than the other, select 1, 2 or 3 on the same side as that plant to indicate how
-        much more pleasing it is. At the end you will be presented with the results and some questions
-        to answer.
-    section.user-info(v-if='!token')
+    header
       h2 Register
+    section.user-info
       p
         label(for='age')
           span Age:
@@ -28,16 +21,9 @@
         select(id='task' v-model='task')
           option(value='' disabled) Select
           option(v-for='task of tasks' :value='task') {{ task | capitalize }}
+    section.submit
       p
         button(@click='register()') Register
-    section.begin(v-if='token')
-      h2 Begin task
-      p
-        label(for='token')
-          span Token:
-        output(id='token') {{ token }}
-      p
-        router-link(:to='taskLink' role='button') Begin
 </template>
 
 <script>
@@ -56,15 +42,11 @@ export default {
     return {
       age: undefined,
       gender: '',
-      token: null,
       task: this.initialTask,
       tasks: [],
     }
   },
   computed: {
-    taskLink () {
-      return `/task/${this.token}`
-    },
   },
   methods: {
     register () {
@@ -74,7 +56,12 @@ export default {
         task: this.task,
       })
         .then(response => {
-          this.token = response.data.token
+          this.$router.push({
+            name: 'intro',
+            params: {
+              token: response.data.token,
+            },
+          })
         })
         .catch(error => console.error('Failed registering user', error))
     },
@@ -90,42 +77,12 @@ export default {
 </script>
 
 <style scoped lang="sass">
-.register
-  overflow: auto
-  width: 800px
-  height: 100%
-  margin: 0 auto
-  padding: 0
-  color: white
-  text-align: left
-
-section
-  >h2
-    text-align: center
-
-section.user-info, section.begin
-  margin: 0 auto
-
-  label
-    margin-right: 5px
-    >span
-      display: inline-block
-      width: 120px
-      text-align: right
-
-  button, a[role="button"]
-    margin-left: 125px
-    padding: 8px
-    font-size: 12pt
-    background: #666666
-    border: 0
-    border-radius: 3px
-    color: white
-    text-decoration: none
-
 section.user-info
-  width: 400px
-
-section.begin
-  width: 500px
+  >p
+    >label
+      margin-right: 10px
+      >span
+        display: inline-block
+        width: 80px
+        text-align: right
 </style>
