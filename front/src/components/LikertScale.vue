@@ -7,17 +7,24 @@
         label
           input(
             type='radio'
-            :name='statement'
+            :name='name'
             :value='value',
             @change='updateValue(index)'
+            v-validate="'required'"
           )
           | {{ point }}
+    .help.danger(v-show='errors.has(name)') {{ errors.first(name) }}
 </template>
 
 <script>
 export default {
+  inject: ['$validator'],
   props: {
     statement: {
+      type: String,
+      required: true,
+    },
+    name: {
       type: String,
       required: true,
     },
@@ -111,4 +118,8 @@ export default {
         display: block
         margin: 0 auto
         margin-bottom: 5px
+
+.help
+  margin-top: 5px
+  text-align: left
 </style>

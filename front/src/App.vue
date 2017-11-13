@@ -124,6 +124,26 @@ section.questionaire
       width: 100%
       height: 100px
 
+.row
+  display: table
+  margin: 20px 0
+
+.input-label, .input-field
+  float: left
+
+.input-label
+  >label
+    display: inline-block
+    margin-right: 10px
+
+.input-field
+  text-align: left
+  >.help
+    margin-top: 5px
+
+.danger.help
+  color: #f66
+
 #app
   font-family: 'Avenir', Helvetica, Arial, sans-serif
   -webkit-font-smoothing: antialiased

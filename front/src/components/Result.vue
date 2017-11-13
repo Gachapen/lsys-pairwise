@@ -24,14 +24,27 @@
           likert-scale(
             statement='I agree with the ranking of the plants shown above'
             scale='agreement'
+            name='agreement'
             v-model='agree'
           )
         section
           h4 What would you say differentiates good plants vs bad plants in the above ranking?
-          textarea(v-model='differentiates')
+          textarea(
+            name='differentiates'
+            v-model='differentiates'
+            v-validate="'required'"
+            :class='{ "danger": errors.has("differentiates") }'
+          )
+          .help.danger(v-show='errors.has("differentiates")') {{ errors.first('differentiates') }}
         section
           h4 Other comments?
-          textarea(v-model='comments')
+          textarea(
+            name='comments'
+            v-model='comments'
+            v-validate="'max:1024'"
+            :class='{ "danger": errors.has("comments") }'
+          )
+          .help.danger(v-show='errors.has("comments")') {{ errors.first('comments') }}
       section.submit
         p
           button(@click='submit()') Submit
@@ -48,6 +61,7 @@ export default {
   components: {
     LikertScale,
   },
+  inject: ['$validator'],
   props: {
     token: {
       type: String,
@@ -111,20 +125,24 @@ export default {
       }
     },
     submit () {
-      put(`${API_BASE}/user/${this.token}/post`, {
-        ranking_agree: this.agree,
-        differentiates: this.differentiates,
-        comments: this.comments,
-      })
-        .then(response => {
-          this.$router.push({
-            name: 'thanks',
-            params: {
-              token: this.token,
-            },
+      this.$validator.validateAll().then(result => {
+        if (result) {
+          put(`${API_BASE}/user/${this.token}/post`, {
+            ranking_agree: this.agree,
+            differentiates: this.differentiates,
+            comments: this.comments,
           })
-        })
-        .catch(error => console.error('Failed registering user', error))
+            .then(response => {
+              this.$router.push({
+                name: 'thanks',
+                params: {
+                  token: this.token,
+                },
+              })
+            })
+            .catch(error => console.error('Failed registering user', error))
+        }
+      })
     },
   },
   created () {
@@ -191,4 +209,8 @@ section.metric
       border-radius: 50%
     >.label
       margin-top: 5px
+
+.help
+  margin-top: 5px
+  text-align: left
 </style>

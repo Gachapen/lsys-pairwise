@@ -15,6 +15,7 @@
     "font-awesome": "^4.7.0",
     "lodash": "^4.17.4",
     "screenfull": "^3.3.2",
+    "vee-validate": "2.0.0-rc.21",
     "vue": "^2.5.3",
     "vue-router": "^3.0.1"
   },
