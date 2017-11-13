@@ -95,6 +95,7 @@ pub fn routes() -> Vec<Route> {
         put_pre_questionnaire,
         put_post_questionnaire,
         get_user_task,
+        get_user_public,
     ]
 }
 
@@ -263,6 +264,42 @@ fn get_user_task(
 
     Ok(Json(json!({
         "task": task.to_string()
+    })))
+}
+
+#[get("/user/<user_token>/public")]
+fn get_user_public(
+    user_token: &RawStr,
+    db_client: State<mongodb::Client>,
+) -> Result<Json, RequestErrorResponse> {
+    let user_res = db_client
+        .db(db::NAME)
+        .collection(db::COLLECTION_USER)
+        .find_one(
+            Some(doc! {
+                "token": user_token.as_str(),
+            }),
+            Some(FindOptions {
+                projection: Some(doc! {
+                    "public": 1,
+                    "_id": 0,
+                }),
+                ..Default::default()
+            }),
+        )
+        .expect("Failed finding user");
+
+    let user_doc = match user_res {
+        Some(doc) => doc,
+        None => return Err(RequestError::not_found("User not found").into()),
+    };
+
+    let public = user_doc
+        .get_str("public")
+        .expect("User did not have 'public' field");
+
+    Ok(Json(json!({
+        "public": public.to_string()
     })))
 }
 
