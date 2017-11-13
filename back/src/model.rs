@@ -117,6 +117,7 @@ pub struct User {
     pub age: u8,
     pub gender: Gender,
     pub from: Option<String>,
+    pub source: String,
     pub task: String,
     pub pre_questionnaire: Option<PreQuestionnaire>,
 }

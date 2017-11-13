@@ -26,6 +26,8 @@ pub struct User {
     pub public: String,
     /// Public token of user that shared the URL to this user, if any
     pub from: Option<String>,
+    /// Source of the participation (such as 'url' or 'observation')
+    pub source: String,
     /// Task assigned to user
     pub task: String,
     pub register_date: NaiveDateTime,
@@ -41,6 +43,7 @@ impl From<model::User> for User {
             token: format!("{}", Uuid::new_v4().simple()),
             public: format!("{}", Uuid::new_v4().simple()),
             from: user.from,
+            source: user.source,
             task: user.task,
             register_date: Utc::now().naive_utc(),
             pre_questionnaire: user.pre_questionnaire,
