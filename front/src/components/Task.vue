@@ -13,9 +13,11 @@
 </template>
 
 <script>
+import axios, { get, post } from 'axios'
+import screenfull from 'screenfull'
+
 import ComparisonSlider from './ComparisonSlider'
 import { API_BASE } from '../config'
-import axios, { get, post } from 'axios'
 
 export default {
   components: {
@@ -76,6 +78,7 @@ export default {
     postWeight (metric, weight) {
       return post(`${API_BASE}/weight`, {
         token: this.token,
+        fullscreen: screenfull.isFullscreen,
         metric,
         a: this.currentPair.a,
         b: this.currentPair.b,

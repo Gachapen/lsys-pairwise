@@ -55,6 +55,7 @@ impl From<model::User> for User {
 #[derive(Serialize, Deserialize)]
 pub struct Weighting {
     pub token: String,
+    pub fullscreen: bool,
     pub metric: Metric,
     pub a: ObjectId,
     pub b: ObjectId,
@@ -66,6 +67,7 @@ impl From<model::Weighting> for Weighting {
     fn from(weighting: model::Weighting) -> Weighting {
         Weighting {
             token: weighting.token,
+            fullscreen: weighting.fullscreen,
             metric: weighting.metric,
             a: ObjectId::with_string(&weighting.a).unwrap(),
             b: ObjectId::with_string(&weighting.b).unwrap(),

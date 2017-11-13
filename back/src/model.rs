@@ -21,6 +21,7 @@ pub enum Metric {
 #[derive(Deserialize)]
 pub struct Weighting {
     pub token: String,
+    pub fullscreen: bool,
     pub metric: Metric,
     pub a: String,
     pub b: String,
