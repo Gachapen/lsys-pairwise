@@ -15,11 +15,18 @@ pub const COLLECTION_SAMPLE: &str = "sample";
 pub const COLLECTION_USER: &str = "user";
 pub const COLLECTION_WEIGHT: &str = "weight";
 
+/// A user representation in the database
 #[derive(Serialize, Deserialize)]
 pub struct User {
     pub age: i32,
     pub gender: Gender,
+    /// Private token used to identify user in API
     pub token: String,
+    /// Public token used to identify user without access to data
+    pub public: String,
+    /// Public token of user that shared the URL to this user, if any
+    pub from: Option<String>,
+    /// Task assigned to user
     pub task: String,
     pub register_date: NaiveDateTime,
     pub pre_questionnaire: Option<PreQuestionnaire>,
@@ -32,6 +39,8 @@ impl From<model::User> for User {
             age: i32::from(user.age),
             gender: user.gender,
             token: format!("{}", Uuid::new_v4().simple()),
+            public: format!("{}", Uuid::new_v4().simple()),
+            from: user.from,
             task: user.task,
             register_date: Utc::now().naive_utc(),
             pre_questionnaire: user.pre_questionnaire,
@@ -85,6 +94,14 @@ pub fn init(db_client: &mongodb::Client) -> mongodb::Result<()> {
 
     db.collection(COLLECTION_USER).create_index(
         doc! { "token": 1 },
+        Some(IndexOptions {
+            unique: Some(true),
+            ..Default::default()
+        }),
+    )?;
+
+    db.collection(COLLECTION_USER).create_index(
+        doc! { "public": 1 },
         Some(IndexOptions {
             unique: Some(true),
             ..Default::default()

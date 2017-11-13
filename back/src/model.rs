@@ -116,6 +116,7 @@ pub struct PreQuestionnaire {
 pub struct User {
     pub age: u8,
     pub gender: Gender,
+    pub from: Option<String>,
     pub task: String,
     pub pre_questionnaire: Option<PreQuestionnaire>,
 }
