@@ -61,6 +61,10 @@ export default {
       required: false,
       default: '',
     },
+    from: {
+      type: String,
+      required: false,
+    },
   },
   data () {
     return {
@@ -91,6 +95,7 @@ export default {
         gender: this.gender,
         task: this.task,
         pre_questionnaire: preQuestionnaire,
+        from: this.from,
       })
         .then(response => {
           this.$router.push({

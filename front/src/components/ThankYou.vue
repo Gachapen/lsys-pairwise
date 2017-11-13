@@ -1,15 +1,15 @@
 <template lang="pug">
   .thanks
     section
-      h1 Thank you for participating!
       .confetti 🎊
+      h1 Thank you for participating!
       .links
         .link
           i.fa.fa-bookmark
           router-link(:to='`/result/${token}?no-questions=true`') Save this link to see your ranking again!
-        .link.share(v-if='task')
+        .link.share(v-if='task && publicToken')
           i.fa.fa-share-alt
-          router-link(:to='`/?task=${task}`') Share this link to let others participate.
+          router-link(:to='`/?task=${task}&from=${publicToken}`') Share this link to let others participate.
 </template>
 
 <script>
@@ -26,6 +26,7 @@ export default {
   data () {
     return {
       task: null,
+      publicToken: null,
     }
   },
   created () {
@@ -34,6 +35,12 @@ export default {
         this.task = response.data.task
       })
       .catch(error => console.error('Failed retrieving user task', error))
+
+    get(`${API_BASE}/user/${this.token}/public`)
+      .then(response => {
+        this.publicToken = response.data.public
+      })
+      .catch(error => console.error('Failed retrieving public token', error))
   },
 }
 </script>

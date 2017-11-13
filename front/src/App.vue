@@ -24,6 +24,7 @@ const router = new VueRouter({
       component: Register,
       props: route => ({
         initialTask: route.query.task,
+        from: route.query.from,
       }),
     },
     {
