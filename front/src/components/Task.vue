@@ -175,11 +175,15 @@ export default {
   height: auto
   margin: 10px
 
-  @media (max-width: 1400px)
+  @media (max-height: 850px)
     width: 500px
     height: 500px
 
-  @media (max-width: 1100px)
+  @media (max-height: 750px)
+    width: 400px
+    height: 400px
+
+  @media (max-height: 650px)
     width: 300px
     height: 300px
 </style>
