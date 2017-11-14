@@ -1,5 +1,7 @@
 <template lang="pug">
   .pairwise
+    p.cancel
+      router-link(:to='`/intro/${token}`') Cancel
     .comparison(v-if='pairs.length > 0')
       .video-pair
         .video(v-html='videoA' ref='videoA')
@@ -140,7 +142,6 @@ export default {
 .pairwise
   width: 100%
   height: 100%
-  padding-top: 20px
   background-color: rgb(127, 127, 127)
   color: #2c3e50
 

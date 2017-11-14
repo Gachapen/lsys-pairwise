@@ -1,5 +1,7 @@
 <template lang="pug">
   .result
+    p.cancel
+      router-link(:to='`/intro/${token}`') Cancel
     section.metric.pleasing
       h2 Ranking of plants based on your answers
       p.details(v-if='questions') Please submit the post-questionnaire below
@@ -171,7 +173,6 @@ export default {
 .result
   width: 100%
   height: 100%
-  padding-top: 20px
   background: #282828
   color: white
 

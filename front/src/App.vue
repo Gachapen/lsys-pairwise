@@ -145,6 +145,9 @@ section.questionnaire
 .danger.help
   color: #f66
 
+.cancel a
+  opacity: 0.7
+
 #app
   font-family: 'Avenir', Helvetica, Arial, sans-serif
   -webkit-font-smoothing: antialiased
