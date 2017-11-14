@@ -14,6 +14,7 @@
 
 <script>
 import { get } from 'axios'
+import screenfull from 'screenfull'
 import { API_BASE } from '../config'
 
 export default {
@@ -30,6 +31,10 @@ export default {
     }
   },
   created () {
+    if (screenfull.enabled && screenfull.isFullscreen) {
+      screenfull.exit()
+    }
+
     get(`${API_BASE}/user/${this.token}/task`)
       .then(response => {
         this.task = response.data.task
