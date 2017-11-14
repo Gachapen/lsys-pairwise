@@ -2,7 +2,7 @@
   .pairwise
     .comparison(v-if='pairs.length > 0')
       .video-pair
-        .video(v-html='videoA')
+        .video(v-html='videoA' ref='videoA')
         .video(v-html='videoB')
       //- comparison-slider.slider.realistic(equal='realistic' more='more realistic' :weight.sync='realistic')
       comparison-slider.slider.pleasing(equal='(dis)pleasing' more='more pleasing' :weight.sync='pleasing' ref='pleasingSlider')
@@ -79,6 +79,7 @@ export default {
       return post(`${API_BASE}/weight`, {
         token: this.token,
         fullscreen: screenfull.isFullscreen,
+        video_size: this.$refs.videoA.children[0].offsetHeight,
         metric,
         a: this.currentPair.a,
         b: this.currentPair.b,
