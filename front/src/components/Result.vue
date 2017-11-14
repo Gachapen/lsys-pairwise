@@ -27,12 +27,21 @@
             name='agreement'
             v-model='agree'
           )
+        section(v-if='agree < 2')
+          h4 Why do you not strongly agree with the ranking?
+          textarea(
+            name='why-disagree'
+            v-model='disagreeWhy'
+            v-validate="'max:1024'"
+            :class='{ "danger": errors.has("why-disagree") }'
+          )
+          .help.danger(v-show='errors.has("why-disagree")') {{ errors.first('why-disagree') }}
         section
           h4 What would you say differentiates good plants vs bad plants in the above ranking?
           textarea(
             name='differentiates'
             v-model='differentiates'
-            v-validate="'required'"
+            v-validate="'required|max:1024'"
             :class='{ "danger": errors.has("differentiates") }'
           )
           .help.danger(v-show='errors.has("differentiates")') {{ errors.first('differentiates') }}
@@ -80,6 +89,7 @@ export default {
       agree: undefined,
       differentiates: undefined,
       comments: null,
+      disagreeWhy: null,
     }
   },
   computed: {
@@ -129,6 +139,7 @@ export default {
         if (result) {
           put(`${API_BASE}/user/${this.token}/post`, {
             ranking_agree: this.agree,
+            disagree_why: this.disagreeWhy,
             differentiates: this.differentiates,
             comments: this.comments,
           })
