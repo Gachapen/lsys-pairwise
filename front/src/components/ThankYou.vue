@@ -6,7 +6,7 @@
       .links
         .link
           i.fa.fa-bookmark
-          router-link(:to='`/result/${token}?no-questions=true`') Save this link to see your ranking again!
+          router-link(:to='`/result/${token}?no-questions=true`') Save this link to see your results again!
         .link.share(v-if='task && publicToken')
           i.fa.fa-share-alt
           router-link(:to='`/?task=${task}&from=${publicToken}`') Share this link to let others participate.
