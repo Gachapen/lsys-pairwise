@@ -13,6 +13,7 @@
   "dependencies": {
     "axios": "^0.17.1",
     "babel-polyfill": "^6.26.0",
+    "detect-browser": "^2.0.0",
     "font-awesome": "^4.7.0",
     "lodash": "^4.17.4",
     "screenfull": "^3.3.2",

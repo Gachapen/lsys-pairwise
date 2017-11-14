@@ -76,6 +76,7 @@
 
 <script>
 import { post, get } from 'axios'
+import { detect } from 'detect-browser'
 import { API_BASE } from '../config'
 import LikertScale from './LikertScale'
 
@@ -126,6 +127,15 @@ export default {
             }
           }
 
+          let browserInfo = null
+          const browser = detect()
+          if (browser) {
+            browserInfo = {
+              name: browser.name,
+              version: browser.version,
+            }
+          }
+
           post(`${API_BASE}/user`, {
             age: parseInt(this.age, 10),
             gender: this.gender,
@@ -133,6 +143,7 @@ export default {
             pre_questionnaire: preQuestionnaire,
             from: this.from,
             source: this.source,
+            browser: browserInfo,
           })
             .then(response => {
               this.$router.push({
