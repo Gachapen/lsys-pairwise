@@ -141,6 +141,7 @@ export default {
   height: 100%
   padding-top: 20px
   background-color: rgb(127, 127, 127)
+  color: #2c3e50
 
   >button
     margin-top: 10px
@@ -148,6 +149,11 @@ export default {
     border: 0
     font-size: 12pt
     background: rgb(200, 200, 200)
+    color: #666666
+
+    &:disabled
+      background: rgb(170, 170, 170)
+      color: #868686
 
 .comparison
   background-color: rgb(127, 127, 127)
@@ -162,13 +168,6 @@ export default {
 
   >.slider
     background: rgb(137, 137, 137)
-
-  >button.next
-    margin-top: 10px
-    padding: 10px 20px
-    border: 0
-    font-size: 12pt
-    background: rgb(200, 200, 200)
 </style>
 
 <style lang="sass">
