@@ -16,6 +16,9 @@
       p.
         There will always be a 'cancel' link at the top of the page to go back to this page if you
         have any issues or would like to withdraw (you can continue from where you left).
+      p.
+        If, during the plant evaluation, you do not see two videos side by side of rotating plants, please try a different browser (copy the URL), or withdraw from the study as it may invalidate the results.
+        Please contact the researcher (Magnus Bjerke Vik #[a(href='mailto:magnusbv@stud.ntnu.no') &lt;magnusbv@stud.ntnu.no&gt;]) if you notice any issues.
       p#token
         label(for='token-out')
           span Your token is:

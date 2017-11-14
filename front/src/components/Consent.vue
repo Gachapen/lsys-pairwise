@@ -28,9 +28,6 @@
             I understand that I may refuse to participate or I may withdraw from the study at any time without prejudice.
       p.
         It is recommended to use a device with a large screen, such as a desktop PC, laptop PC or tablet to observe the plants in more detail.
-        You should also use a modern browser to avoid technical issues.
-        If, during the plant evaluation, you do not see two videos of plants side by side or the plants do not rotate, please try a different browser, or withdraw from the study as it may bias the results.
-        Please contact the researcher (Magnus Bjerke Vik #[a(href='mailto:magnusbv@stud.ntnu.no') &lt;magnusbv@stud.ntnu.no&gt;]) if you notice any issues.
       p
         button(:disabled='!agree' @click='$router.push({ path: "register", query: $router.currentRoute.query })') Participate
 </template>
