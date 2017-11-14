@@ -8,7 +8,7 @@
         The program that generates the plants needs to evaluate how aesthetically pleasing the plants are in order to distinguish good plants from bad plants.
         Your contribution in this study will be on evaluating how well this program evaluates the plants.
       p.
-        If you agree to participate, you will complete three activities: a pre-questionaire, evaluating pairs of plants, and a post-questionaire.
+        If you agree to participate, you will complete three activities: a pre-questionnaire, evaluating pairs of plants, and a post-questionnaire.
         The whole process is expected to take around 10 minutes.
       p.
         All data collected is anonymous and confidential.

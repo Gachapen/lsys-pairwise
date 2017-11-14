@@ -112,7 +112,7 @@ section
   >p
     text-align: left
 
-section.questionaire
+section.questionnaire
   >section
     margin-top: 40px
     margin-bottom: 34px

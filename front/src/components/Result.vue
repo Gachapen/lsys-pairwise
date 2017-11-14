@@ -2,7 +2,7 @@
   .result
     section.metric.pleasing
       h2 Ranking of plants based on your answers
-      p.details(v-if='questions') Please submit the post-questionaire below
+      p.details(v-if='questions') Please submit the post-questionnaire below
       template(v-if='pleasing_ranking.length > 0')
         .video(v-for='(rank, index) of pleasing_ranking')
           h4 {{ index + 1 }}.
@@ -18,8 +18,8 @@
             .label {{ index + 1 }}
       .loading(v-else) Loading...
     template(v-if='questions')
-      section.questionaire
-        h2 Post-questionaire
+      section.questionnaire
+        h2 Post-questionnaire
         section
           likert-scale(
             statement='I agree with the ranking of the plants shown above'
