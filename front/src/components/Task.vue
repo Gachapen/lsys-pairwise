@@ -177,15 +177,31 @@ export default {
   height: auto
   margin: 10px
 
-  @media (max-height: 830px)
+  @media (max-height: 830px), (max-width: 1250px)
     width: 500px
     height: 500px
 
-  @media (max-height: 730px)
+  @media (max-height: 730px), (max-width: 1050px)
     width: 400px
     height: 400px
 
-  @media (max-height: 630px)
+  @media (max-height: 630px), (max-width: 850px)
     width: 300px
     height: 300px
+
+  @media (max-height: 530px), (max-width: 650px)
+    width: 200px
+    height: 200px
+
+  @media (max-height: 430px), (max-width: 450px)
+    width: 150px
+    height: 150px
+
+  @media (max-height: 370px), (max-width: 350px)
+    width: 125px
+    height: 125px
+
+  @media (max-height: 345px), (max-width: 300px)
+    width: 100px
+    height: 100px
 </style>
