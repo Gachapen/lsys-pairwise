@@ -22,6 +22,7 @@ pub enum Metric {
 pub struct Weighting {
     pub token: String,
     pub fullscreen: bool,
+    pub video_size: u16,
     pub metric: Metric,
     pub a: String,
     pub b: String,
@@ -113,6 +114,12 @@ pub struct PreQuestionnaire {
     video_game: Likert5,
 }
 
+#[derive(Serialize, Deserialize)]
+pub struct Browser {
+    pub name: String,
+    pub version: String,
+}
+
 #[derive(Deserialize)]
 pub struct User {
     pub age: u8,
@@ -121,4 +128,5 @@ pub struct User {
     pub source: String,
     pub task: String,
     pub pre_questionnaire: Option<PreQuestionnaire>,
+    pub browser: Option<Browser>,
 }

@@ -7,7 +7,7 @@ use mongodb::coll::options::{FindOptions, IndexModel, IndexOptions};
 use uuid::Uuid;
 
 use serde_enum;
-use model::{self, Gender, Metric, PostQuestionnaire, PreQuestionnaire};
+use model::{self, Browser, Gender, Metric, PostQuestionnaire, PreQuestionnaire};
 use cfg;
 
 pub const NAME: &str = "lsys-pairwise";
@@ -33,6 +33,7 @@ pub struct User {
     pub register_date: NaiveDateTime,
     pub pre_questionnaire: Option<PreQuestionnaire>,
     pub post_questionnaire: Option<PostQuestionnaire>,
+    pub browser: Option<Browser>,
 }
 
 impl From<model::User> for User {
@@ -48,6 +49,7 @@ impl From<model::User> for User {
             register_date: Utc::now().naive_utc(),
             pre_questionnaire: user.pre_questionnaire,
             post_questionnaire: None,
+            browser: user.browser,
         }
     }
 }
@@ -56,6 +58,7 @@ impl From<model::User> for User {
 pub struct Weighting {
     pub token: String,
     pub fullscreen: bool,
+    pub video_size: i32,
     pub metric: Metric,
     pub a: ObjectId,
     pub b: ObjectId,
@@ -68,6 +71,7 @@ impl From<model::Weighting> for Weighting {
         Weighting {
             token: weighting.token,
             fullscreen: weighting.fullscreen,
+            video_size: i32::from(weighting.video_size),
             metric: weighting.metric,
             a: ObjectId::with_string(&weighting.a).unwrap(),
             b: ObjectId::with_string(&weighting.b).unwrap(),
