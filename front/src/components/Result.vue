@@ -39,14 +39,14 @@
           )
           .help.danger(v-show='errors.has("why-disagree")') {{ errors.first('why-disagree') }}
         section
-          h4 What would you say differentiates good plants vs bad plants in the above ranking?
+          h4 What would you say separates good plants from bad plants in the above ranking?
           textarea(
-            name='differentiates'
+            name='separates'
             v-model='differentiates'
             v-validate="'required|max:1024'"
-            :class='{ "danger": errors.has("differentiates") }'
+            :class='{ "danger": errors.has("separates") }'
           )
-          .help.danger(v-show='errors.has("differentiates")') {{ errors.first('differentiates') }}
+          .help.danger(v-show='errors.has("separates")') {{ errors.first('separates') }}
         section
           h4 Other comments?
           textarea(
