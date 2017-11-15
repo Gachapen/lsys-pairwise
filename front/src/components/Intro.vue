@@ -10,9 +10,10 @@
         to answer.
       p.
         It is recommended to
-        #[span.link(v-if='canFullscreen' @click='goFullscreen') go fullscreen]
+        #[span.link(v-if='canFullscreen' @click='goFullscreen') #[b go fullscreen]]
         #[span(v-else) go fullscreen]
         so that you get a bigger view of the plants and less distraction.
+        You can press the ESC key (or F11) to exit fullscreen.
       p.
         There will always be a 'cancel' link at the top of the page to go back to this page if you
         have any issues or would like to withdraw (you can continue from where you left).
