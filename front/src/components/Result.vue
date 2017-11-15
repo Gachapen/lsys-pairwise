@@ -8,7 +8,7 @@
       template(v-if='pleasing_ranking.length > 0')
         .video(v-for='(rank, index) of pleasing_ranking')
           h4 {{ index + 1 }}.
-          video(autoplay muted loop playsinline :title='sample_names[rank.name]')
+          video(autoplay muted loop playsinline :title='sample_names[rank.name]' :poster='require("../assets/loading_frame.png")')
             source(:src='webmUrl(rank.name)' type='video/webm')
             source(:src='mp4Url(rank.name)' type='video/mp4')
             | Can't play video; your browser doesn't support HTML5 video in WebM with VP8/VP9 or MP4 with H.264.

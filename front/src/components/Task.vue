@@ -120,7 +120,9 @@ export default {
       }
       sources += `Can't play video; your browser doesn't support HTML5 video in WebM with VP9 or MP4 with H.264.`
 
-      return `<video autoplay muted loop playsinline>${sources}</video>`
+      let poster = require('../assets/loading_frame.png')
+
+      return `<video autoplay muted loop playsinline poster="${poster}">${sources}</video>`
     },
   },
   created () {
