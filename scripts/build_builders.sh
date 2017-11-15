@@ -18,7 +18,7 @@ while [[ $# -gt 0 ]]; do
 	esac
 done
 
-source ./vars.sh && \
+source ./scripts/vars.sh && \
 
 echo "Building builders..." && \
 sudo docker build --pull $docker_args -t $front_builder $(pwd)/front/docker-builder && \

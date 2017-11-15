@@ -1,7 +1,7 @@
 #!/bin/bash
 
 env $(cat .env | xargs) | egrep "LSYS_*|ROCKET_*" && \
-source ./vars.sh && \
+source ./scripts/vars.sh && \
 
 echo "Building frontend..." && \
 sudo docker run --rm -it \
