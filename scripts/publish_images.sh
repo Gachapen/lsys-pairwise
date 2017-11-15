@@ -18,9 +18,6 @@ if [ $tag = true ]; then
 	done
 fi
 
-sudo docker push $image_base/frontend-builder:latest
-sudo docker push $image_base/backend-builder:latest
-
 sudo LSYS_VERSION=latest docker-compose push
 
 if [ $tag = true ]; then

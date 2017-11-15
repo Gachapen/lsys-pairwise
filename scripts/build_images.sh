@@ -1,11 +1,7 @@
-front_builder=registry.gitlab.com/gachapen/lsys-pairwise/frontend-builder:latest
-back_builder=registry.gitlab.com/gachapen/lsys-pairwise/backend-builder:latest
+#!/bin/bash
 
 env $(cat .env | xargs) | egrep "LSYS_*|ROCKET_*" && \
-
-echo "Building builders..." && \
-sudo docker build -t $front_builder $(pwd)/front/docker-builder && \
-sudo docker build -t $back_builder $(pwd)/back/docker-builder && \
+source ./vars.sh && \
 
 echo "Building frontend..." && \
 sudo docker run --rm -it \
@@ -25,6 +21,6 @@ sudo docker run --rm -it \
 
 echo "" && \
 echo "Building images..." && \
-sudo docker-compose build && \
+sudo docker-compose build --pull && \
 
 echo "Done."
