@@ -85,7 +85,7 @@ export default {
   >.headings
     width: 100%
     display: flex
-    justify-content: space-evenly
+    justify-content: space-around
 
     h4
       margin-top: 10px
