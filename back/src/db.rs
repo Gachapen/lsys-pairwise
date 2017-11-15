@@ -1,12 +1,10 @@
 use bson::oid::ObjectId;
 use chrono::{NaiveDateTime, Utc};
 use mongodb::{self, Client, ThreadedClient};
-use mongodb::error::Error;
 use mongodb::db::ThreadedDatabase;
-use mongodb::coll::options::{FindOptions, IndexModel, IndexOptions};
+use mongodb::coll::options::{IndexModel, IndexOptions};
 use uuid::Uuid;
 
-use serde_enum;
 use model::{self, Browser, Gender, Metric, PostQuestionnaire, PreQuestionnaire};
 use cfg;
 
@@ -157,51 +155,4 @@ pub fn connect(db_cfg: &cfg::Db) -> Client {
     println!("Connected to MongoDB at {}", db_cfg.host);
 
     client
-}
-
-pub fn missing_measurement(
-    user_token: &str,
-    id_a: &ObjectId,
-    id_b: &ObjectId,
-    db_client: &Client,
-) -> Result<bool, Error> {
-    let collection = db_client.db(NAME).collection(COLLECTION_WEIGHT);
-
-    let doc_a = collection.find_one(
-        Some(doc! {
-            "token": user_token,
-            // FIXME: This is a hack to support only the pleasing metric.
-            "metric": serde_enum::to_string(&Metric::Pleasing).unwrap(),
-            "a": id_a.clone(),
-            "b": id_b.clone(),
-        }),
-        Some(FindOptions {
-            projection: Some(doc! {
-                "_id": 0,
-            }),
-            ..Default::default()
-        }),
-    )?;
-
-    if doc_a.is_some() {
-        return Ok(false);
-    }
-
-    let doc_b = collection.find_one(
-        Some(doc! {
-            "token": user_token,
-            // FIXME: This is a hack to support only the pleasing metric.
-            "metric": serde_enum::to_string(&Metric::Pleasing).unwrap(),
-            "a": id_b.clone(),
-            "b": id_a.clone(),
-        }),
-        Some(FindOptions {
-            projection: Some(doc! {
-                "_id": 0,
-            }),
-            ..Default::default()
-        }),
-    )?;
-
-    Ok(doc_b.is_none())
 }

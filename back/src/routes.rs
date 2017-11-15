@@ -10,6 +10,7 @@ use rocket::http::{RawStr, Status};
 use rocket::request::FromParam;
 use rocket::response::{status, NamedFile};
 use rocket_contrib::json::Json;
+use std::collections::{HashMap, HashSet};
 use std::error::Error;
 use std::path::Path;
 
@@ -335,6 +336,42 @@ fn get_task(
     db_client: State<mongodb::Client>,
 ) -> Result<Json<Vec<Pair>>, RequestErrorResponse> {
     let task = get_users_task(user, &db_client)?;
+
+    let weights_cursor = db_client
+        .db(db::NAME)
+        .collection(db::COLLECTION_WEIGHT)
+        .find(
+            Some(doc! {
+                "token": user.as_str(),
+                "metric": serde_enum::to_string(&Metric::Pleasing).unwrap(),
+            }),
+            Some(FindOptions {
+                projection: Some(doc! {
+                    "_id": 0,
+                    "a": 1,
+                    "b": 1,
+                }),
+                ..Default::default()
+            }),
+        )
+        .expect("Failed retrieving weights");
+
+    let mut weighted: HashMap<ObjectId, HashSet<ObjectId>> = HashMap::new();
+    for weight_doc in weights_cursor {
+        let weight_doc = weight_doc.expect("Failed retrieving weight");
+        let a = weight_doc.get_object_id("a").unwrap();
+        let b = weight_doc.get_object_id("b").unwrap();
+
+        weighted
+            .entry(a.clone())
+            .or_insert_with(HashSet::new)
+            .insert(b.clone());
+        weighted
+            .entry(b.clone())
+            .or_insert_with(HashSet::new)
+            .insert(a.clone());
+    }
+
     let sample_cursor = db_client
         .db(db::NAME)
         .collection(db::COLLECTION_SAMPLE)
@@ -351,22 +388,26 @@ fn get_task(
         )
         .expect("Failed retrieving samples");
 
-    let documents: Result<Vec<_>, _> = sample_cursor.collect();
-    let documents = documents.expect("Failed retrieveing sample documents");
+    let sample_documents: Result<Vec<_>, _> = sample_cursor.collect();
+    let sample_documents = sample_documents.expect("Failed retrieveing sample documents");
 
-    let ids: Vec<&ObjectId> = documents
+    let sample_ids: Vec<&ObjectId> = sample_documents
         .iter()
         .map(|doc| doc.get_object_id("_id"))
         .collect::<Result<_, _>>()
         .expect("Failed deserializing documents");
 
-    let num_samples = ids.len();
+    let num_samples = sample_ids.len();
     let num_pairs = (num_samples * (num_samples - 1)) / 2;
     let mut pairs = Vec::with_capacity(num_pairs);
-    for (i, id_a) in ids.iter().enumerate() {
-        for id_b in ids.iter().skip(i + 1) {
-            let needs_measurement =
-                db::missing_measurement(user, id_a, id_b, &db_client).expect("Failed quering DB");
+    for (i, id_a) in sample_ids.iter().enumerate() {
+        for id_b in sample_ids.iter().skip(i + 1) {
+            // Only keep pairs that have not been weighted before
+            let needs_measurement = match weighted.get(id_a) {
+                None => true,
+                Some(paired) => !paired.contains(id_b),
+            };
+
             if needs_measurement {
                 pairs.push(Pair {
                     a: id_a.to_hex(),
