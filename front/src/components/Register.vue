@@ -34,7 +34,7 @@
           .help.danger(v-show='errors.has("gender")') {{ errors.first('gender') }}
       .row
         .input-label
-          label(for='education') Education level:
+          label(for='education') Education level: #[br] (in progress or completed)
         .input-field
           select(
             id='education'
