@@ -6,18 +6,21 @@
       h2 Ranking of plants based on your answers
       p.details(v-if='questions') Please submit the post-questionnaire below
       template(v-if='pleasing_ranking.length > 0')
+        p.description.
+           The plants below are ordered after your preference, where the top leftmost is the one you like the most.
+           The white line above them represents how much more you prefered one plant over another, and the numbers on it refer to the numbers above the plants.
+           Thus you can see what plants you like more and how much more you like them.
+        .plot
+          .line
+          .point(v-for='(point, index) of pleasing_points' :style='{ left: point * 100 + "%" }')
+            .circle
+            .label {{ index + 1 }}
         .video(v-for='(rank, index) of pleasing_ranking')
           h4 {{ index + 1 }}.
           video(autoplay muted loop playsinline :title='sample_names[rank.name]' :poster='require("../assets/loading_frame.png")')
             source(:src='webmUrl(rank.name)' type='video/webm')
             source(:src='mp4Url(rank.name)' type='video/mp4')
             | Can't play video; your browser doesn't support HTML5 video in WebM with VP8/VP9 or MP4 with H.264.
-        h4 Relative rank distance
-        .plot
-          .line
-          .point(v-for='(point, index) of pleasing_points' :style='{ left: point * 100 + "%" }')
-            .circle
-            .label {{ index + 1 }}
       .loading(v-else) Loading...
     template(v-if='questions')
       section.questionnaire
@@ -186,7 +189,7 @@ section.metric
   p.details
     text-align: center
     font-style: italic
-    opacity: 0.8
+    font-weight: bold
 
 .video
   display: inline-block
@@ -201,6 +204,7 @@ section.metric
 
 .plot
   margin: 0 100px
+  margin-top: 20px
   height: 33px
   position: relative
 
@@ -225,4 +229,12 @@ section.metric
 .help
   margin-top: 5px
   text-align: left
+
+.loading
+  font-weight: bold
+  font-size: 20px
+
+p.description
+  max-width: 800px
+  margin: 0 auto
 </style>
