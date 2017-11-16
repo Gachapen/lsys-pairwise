@@ -10,7 +10,7 @@
         Your contribution in this study will be on evaluating how well this program does exactly that.
       p.
         If you agree to participate, you will complete three activities: a pre-questionnaire, evaluating pairs of plants, and a post-questionnaire.
-        The whole process is expected to take around 10 minutes.
+        The whole process is expected to take around 15 minutes.
       p.
         Data that you input in fields will be collected.
         Additionally, some data will be automatically collected, limited to your browser name and version, plant video dimensions, submission times and if fullscreen is enabled or not.
