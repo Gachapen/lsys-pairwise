@@ -51,6 +51,51 @@
             option(value='master') Master
             option(value='doctoral') Doctoral
           .help.danger(v-show='errors.has("education")') {{ errors.first('education') }}
+      .row
+        .input-label
+          label(for='occupation') Occupation / studies:
+        .input-field
+          select(
+            id='occupation'
+            name='occupation'
+            v-model='occupation'
+            v-validate="'required'"
+            :class='{ "danger": errors.has("occupation") }'
+          )
+            option(value='' disabled) Select
+            option(value='agricultural_forestry_and_fishery') Agricultural, forestry and fishery
+            option(value='armed_forces') Armed forces
+            option(value='business_and_administration') Business and administration
+            option(value='clerical_support') Clerical support
+            option(value='craft_and_related_trades') Craft and related trades
+            option(value='creative_artist') Creative artist
+            option(value='cultural') Cultural
+            option(value='health_medicine') Health/Medicine
+            option(value='information_and_communication_technology') Information and communication technology
+            option(value='legal') Legal
+            option(value='management') Management
+            option(value='manual_labor') Manual labor
+            option(value='plant_and_machine_operation_and_assembly') Plant and machine operation and assembly
+            option(value='science_and_engineering') Science and engineering
+            option(value='service_and_sales') Service and sales
+            option(value='social_work') Social work
+            option(value='sport') Sport
+            option(value='teaching') Teaching
+            option(value='other') Other
+          .help.danger(v-show='errors.has("occupation")') {{ errors.first('occupation') }}
+      .row(v-if='occupation === "other"')
+        .input-label
+          label(for='other_occupation') Specify occupation / studies:
+        .input-field
+          input(
+            id='other_occupation'
+            name='other_occupation'
+            type='text'
+            v-model='other_occupation'
+            v-validate="'required'"
+            :class='{ "danger": errors.has("other_occupation") }'
+          )
+          .help.danger(v-show='errors.has("other_occupation")') {{ errors.first('other_occupation') }}
       //- .row
       //-   .input-label
       //-     label(for='task') Task:
@@ -125,6 +170,8 @@ export default {
       age: undefined,
       gender: '',
       education: '',
+      occupation: '',
+      other_occupation: undefined,
       task: this.initialTask,
       tasks: [],
       plantWork: undefined,
@@ -156,10 +203,18 @@ export default {
             }
           }
 
+          let occupation = this.occupation
+          if (occupation === 'other') {
+            occupation = {
+              'other': this.other_occupation,
+            }
+          }
+
           post(`${API_BASE}/user`, {
             age: parseInt(this.age, 10),
             gender: this.gender,
             education: this.education,
+            occupation: occupation,
             task: this.task,
             pre_questionnaire: preQuestionnaire,
             from: this.from,
@@ -191,6 +246,6 @@ export default {
 
 <style scoped lang="sass">
 .input-label
-  width: 130px
+  width: 200px
   text-align: right
 </style>

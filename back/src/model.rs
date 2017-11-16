@@ -132,11 +132,36 @@ pub enum Education {
     Doctoral,
 }
 
+#[derive(Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum Occupation {
+    ClericalSupport,
+    ServiceAndSales,
+    AgriculturalForestryAndFishery,
+    CraftAndRelatedTrades,
+    PlantAndMachineOperationAndAssembly,
+    ManualLabor,
+    ArmedForces,
+    BusinessAndAdministration,
+    InformationAndCommunicationTechnology,
+    Management,
+    ScienceAndEngineering,
+    HealthMedicine,
+    Teaching,
+    CreativeArtist,
+    Legal,
+    SocialWork,
+    Cultural,
+    Sport,
+    Other(String),
+}
+
 #[derive(Deserialize)]
 pub struct User {
     pub age: u8,
     pub gender: Gender,
     pub education: Education,
+    pub occupation: Occupation,
     pub from: Option<String>,
     pub source: String,
     pub task: String,

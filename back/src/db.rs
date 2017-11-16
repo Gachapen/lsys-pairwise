@@ -5,7 +5,8 @@ use mongodb::db::ThreadedDatabase;
 use mongodb::coll::options::{IndexModel, IndexOptions};
 use uuid::Uuid;
 
-use model::{self, Browser, Education, Gender, Metric, PostQuestionnaire, PreQuestionnaire};
+use model::{self, Browser, Education, Gender, Metric, Occupation, PostQuestionnaire,
+            PreQuestionnaire};
 use cfg;
 
 pub const NAME: &str = "lsys-pairwise";
@@ -19,6 +20,7 @@ pub struct User {
     pub age: i32,
     pub gender: Gender,
     pub education: Education,
+    pub occupation: Occupation,
     /// Private token used to identify user in API
     pub token: String,
     /// Public token used to identify user without access to data
@@ -41,6 +43,7 @@ impl From<model::User> for User {
             age: i32::from(user.age),
             gender: user.gender,
             education: user.education,
+            occupation: user.occupation,
             token: format!("{}", Uuid::new_v4().simple()),
             public: format!("{}", Uuid::new_v4().simple()),
             from: user.from,
