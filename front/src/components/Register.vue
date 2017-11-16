@@ -108,7 +108,7 @@ export default {
     initialTask: {
       type: String,
       required: false,
-      default: undefined,
+      default: 'experiment2',
     },
     from: {
       type: String,
