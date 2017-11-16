@@ -34,18 +34,37 @@
           .help.danger(v-show='errors.has("gender")') {{ errors.first('gender') }}
       .row
         .input-label
-          label(for='task') Task:
+          label(for='education') Education level:
         .input-field
           select(
-            id='task'
-            name='task'
-            v-model='task'
+            id='education'
+            name='education'
+            v-model='education'
             v-validate="'required'"
-            :class='{ "danger": errors.has("task") }'
+            :class='{ "danger": errors.has("education") }'
           )
             option(value='' disabled) Select
-            option(v-for='task of tasks' :value='task') {{ task | capitalize }}
-          .help.danger(v-show='errors.has("task")') {{ errors.first('task') }}
+            option(value='none') None
+            option(value='primary') Primary
+            option(value='secondary') Secondary
+            option(value='bachelor') Bachelor
+            option(value='master') Master
+            option(value='doctoral') Doctoral
+          .help.danger(v-show='errors.has("education")') {{ errors.first('education') }}
+      //- .row
+      //-   .input-label
+      //-     label(for='task') Task:
+      //-   .input-field
+      //-     select(
+      //-       id='task'
+      //-       name='task'
+      //-       v-model='task'
+      //-       v-validate="'required'"
+      //-       :class='{ "danger": errors.has("task") }'
+      //-     )
+      //-       option(value='' disabled) Select
+      //-       option(v-for='task of tasks' :value='task') {{ task | capitalize }}
+      //-     .help.danger(v-show='errors.has("task")') {{ errors.first('task') }}
     section.questionaire
       section
         likert-scale(
@@ -89,7 +108,7 @@ export default {
     initialTask: {
       type: String,
       required: false,
-      default: '',
+      default: undefined,
     },
     from: {
       type: String,
@@ -105,6 +124,7 @@ export default {
     return {
       age: undefined,
       gender: '',
+      education: '',
       task: this.initialTask,
       tasks: [],
       plantWork: undefined,
@@ -139,6 +159,7 @@ export default {
           post(`${API_BASE}/user`, {
             age: parseInt(this.age, 10),
             gender: this.gender,
+            education: this.education,
             task: this.task,
             pre_questionnaire: preQuestionnaire,
             from: this.from,
@@ -170,6 +191,6 @@ export default {
 
 <style scoped lang="sass">
 .input-label
-  width: 80px
+  width: 130px
   text-align: right
 </style>

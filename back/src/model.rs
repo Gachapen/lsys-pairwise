@@ -121,10 +121,22 @@ pub struct Browser {
     pub version: String,
 }
 
+#[derive(Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum Education {
+    None,
+    Primary,
+    Secondary,
+    Bachelor,
+    Master,
+    Doctoral,
+}
+
 #[derive(Deserialize)]
 pub struct User {
     pub age: u8,
     pub gender: Gender,
+    pub education: Education,
     pub from: Option<String>,
     pub source: String,
     pub task: String,
