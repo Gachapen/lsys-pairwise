@@ -10,6 +10,7 @@
         .link
           i.fa.fa-bookmark
           router-link(:to='`/result/${token}?no-questions=true`') Save this link to see your results again!
+        p(v-if='mturk') Your mturk code: {{ publicToken }}
 </template>
 
 <script>
@@ -28,6 +29,7 @@ export default {
     return {
       task: null,
       publicToken: null,
+      mturk: false,
     }
   },
   created () {
@@ -44,6 +46,12 @@ export default {
     get(`${API_BASE}/user/${this.token}/public`)
       .then(response => {
         this.publicToken = response.data.public
+      })
+      .catch(error => console.error('Failed retrieving public token', error))
+
+    get(`${API_BASE}/user/${this.token}/source`)
+      .then(response => {
+        this.mturk = response.data.source === 'mturk'
       })
       .catch(error => console.error('Failed retrieving public token', error))
   },
