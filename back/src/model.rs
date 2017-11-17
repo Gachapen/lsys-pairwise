@@ -104,7 +104,7 @@ impl<'de> Deserialize<'de> for Likert5 {
 pub struct PostQuestionnaire {
     ranking_agree: Likert5,
     disagree_why: Option<String>,
-    differentiates: String,
+    differentiates: Option<String>,
     comments: Option<String>,
 }
 

@@ -2,32 +2,12 @@
   .result
     p.cancel
       router-link(:to='`/intro/${token}`') Cancel
-    section.metric.pleasing
-      h2 Ranking of plants based on your answers
-      p.details(v-if='questions') Please submit the post-questionnaire below
-      template(v-if='pleasing_ranking.length > 0')
-        p.description.
-           The plants below are ordered after your preference, where the top leftmost is the one you like the most.
-           The white line above them represents how much more you prefered one plant over another, and the numbers on it refer to the numbers above the plants.
-           Thus you can see what plants you like more and how much more you like them.
-        .plot
-          .line
-          .point(v-for='(point, index) of pleasing_points' :style='{ left: point * 100 + "%" }')
-            .circle
-            .label {{ index + 1 }}
-        .video(v-for='(rank, index) of pleasing_ranking')
-          h4 {{ index + 1 }}.
-          video(autoplay muted loop playsinline :title='sample_names[rank.name]' :poster='require("../assets/loading_frame.png")')
-            source(:src='webmUrl(rank.name)' type='video/webm')
-            source(:src='mp4Url(rank.name)' type='video/mp4')
-            | Can't play video; your browser doesn't support HTML5 video in WebM with VP8/VP9 or MP4 with H.264.
-      .loading(v-else) Loading...
     template(v-if='questions')
       section.questionnaire
         h2 Post-questionnaire
         section
           likert-scale(
-            statement='I agree with the ranking of the plants shown above'
+            statement='I agree with the ranking of the plants shown below (scroll down)'
             scale='agreement'
             name='agreement'
             v-model='agree'
@@ -46,7 +26,7 @@
           textarea(
             name='separates'
             v-model='differentiates'
-            v-validate="'required|max:1024'"
+            v-validate="'max:1024'"
             :class='{ "danger": errors.has("separates") }'
           )
           .help.danger(v-show='errors.has("separates")') {{ errors.first('separates') }}
@@ -61,7 +41,26 @@
           .help.danger(v-show='errors.has("comments")') {{ errors.first('comments') }}
       section.submit
         p
-          button(@click='submit()') Submit
+          button(@click='submit()') Finish!
+    section.metric.pleasing
+      h2 Ranking of plants based on your answers
+      template(v-if='pleasing_ranking.length > 0')
+        p.description.
+           The plants below are ordered after your preference, where the top leftmost is the one you like the most.
+           The white line above them represents how much more you prefered one plant over another, and the numbers on it refer to the numbers above the plants.
+           Thus you can see what plants you like more and how much more you like them.
+        .plot
+          .line
+          .point(v-for='(point, index) of pleasing_points' :style='{ left: point * 100 + "%" }')
+            .circle
+            .label {{ index + 1 }}
+        .video(v-for='(rank, index) of pleasing_ranking')
+          h4 {{ index + 1 }}.
+          video(autoplay muted loop playsinline :title='sample_names[rank.name]' :poster='require("../assets/loading_frame.png")')
+            source(:src='webmUrl(rank.name)' type='video/webm')
+            source(:src='mp4Url(rank.name)' type='video/mp4')
+            | Can't play video; your browser doesn't support HTML5 video in WebM with VP8/VP9 or MP4 with H.264.
+      .loading(v-else) Loading...
 </template>
 
 <script>
@@ -180,6 +179,7 @@ export default {
   color: white
 
 section.metric
+  margin-top: 30px
   max-width: 100%
   margin-bottom: 30px
 
@@ -237,4 +237,13 @@ section.metric
 p.description
   max-width: 800px
   margin: 0 auto
+
+.submit
+  margin-bottom: 50px
+  p
+    text-align: center
+    button
+      padding: 13px
+      font-weight: bold
+      font-size: 20px
 </style>
