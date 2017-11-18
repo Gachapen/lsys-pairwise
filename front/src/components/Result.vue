@@ -22,7 +22,7 @@
           )
           .help.danger(v-show='errors.has("why-disagree")') {{ errors.first('why-disagree') }}
         section
-          h4 What would you say separates good plants from bad plants in the above ranking?
+          h4 What would you say separates good plants from bad plants in the ranking?
           textarea(
             name='separates'
             v-model='differentiates'
