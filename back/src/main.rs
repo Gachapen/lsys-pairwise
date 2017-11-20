@@ -89,6 +89,25 @@ fn main() {
                         .help("Type of metric to save weights for"),
                 ),
         )
+        .subcommand(
+            SubCommand::with_name("save-criteria-weights")
+                .about("Save weights to file")
+                .arg(
+                    Arg::with_name("task")
+                        .long("task")
+                        .takes_value(true)
+                        .required(true)
+                        .help("Task to save weights for"),
+                )
+                .arg(
+                    Arg::with_name("metric")
+                        .long("metric")
+                        .takes_value(true)
+                        .required(true)
+                        .possible_values(&["realistic", "pleasing"])
+                        .help("Type of metric to save weights for"),
+                ),
+        )
         .get_matches();
 
     if matches.subcommand_matches("server").is_some() {
@@ -104,6 +123,11 @@ fn main() {
         let metric = serde_enum::from_str(matches.value_of("metric").unwrap()).unwrap();
         let cfg = Config::from_env();
         save_weights(task, &metric, &cfg.db);
+    } else if let Some(matches) = matches.subcommand_matches("save-criteria-weights") {
+        let task = matches.value_of("task").unwrap();
+        let metric = serde_enum::from_str(matches.value_of("metric").unwrap()).unwrap();
+        let cfg = Config::from_env();
+        save_criteria_weights(task, &metric, &cfg.db);
     } else {
         println!("No subcommand used: Exiting.");
     }
@@ -167,5 +191,59 @@ fn save_weights(task: &str, metric: &Metric, cfg: &cfg::Db) {
                 format!("{}", weight.weight),
             ])
             .unwrap();
+    }
+}
+
+fn save_criteria_weights(task: &str, metric: &Metric, cfg: &cfg::Db) {
+    let db_client = db::connect(cfg);
+    let db = db_client.db(db::NAME);
+
+    let user_docs = db.collection(db::COLLECTION_USER)
+        .find(
+            Some(doc! {
+                "task": task,
+            }),
+            Some(FindOptions {
+                projection: Some(doc! {
+                    "_id": 0,
+                    "token": 1,
+                }),
+                ..Default::default()
+            }),
+        )
+        .expect("Failed querying users");
+
+    let user_tokens: Vec<_> = user_docs
+        .map(|doc| doc.unwrap().get_str("token").unwrap().to_string())
+        .collect();
+
+    #[derive(Serialize)]
+    struct UserWeight {
+        user: String,
+        item: String,
+        weight: f32,
+    }
+
+    let weights: Vec<_> = user_tokens
+        .into_iter()
+        .flat_map(|token| {
+            let weights = stats::calculate_sample_weights(task, &token, metric, &db_client);
+            weights.into_iter().map(move |w| {
+                UserWeight {
+                    user: token.clone(),
+                    item: w.name,
+                    weight: w.weight,
+                }
+            })
+        })
+        .collect();
+
+    let mut writer = csv::WriterBuilder::new()
+        .has_headers(true)
+        .from_path("criteria-weights.csv")
+        .unwrap();
+
+    for weight in weights {
+        writer.serialize(weight).unwrap();
     }
 }
