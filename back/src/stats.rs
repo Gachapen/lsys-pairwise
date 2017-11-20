@@ -4,6 +4,8 @@ use mongodb::{self, ThreadedClient};
 use mongodb::db::{Database, ThreadedDatabase};
 use na::{DMatrix, DVector};
 use serde_enum;
+use std::error;
+use std::fmt::{self, Display, Formatter};
 
 use db::{self, Weighting};
 use cfg;
@@ -21,30 +23,49 @@ struct SampleSet {
     ids: Vec<ObjectId>,
 }
 
+#[derive(Debug)]
+pub enum Error {
+    MissingWeights,
+}
+
+impl Display for Error {
+    fn fmt(&self, f: &mut Formatter) -> Result<(), fmt::Error> {
+        write!(f, "{}", error::Error::description(self))
+    }
+}
+
+impl error::Error for Error {
+    fn description(&self) -> &str {
+        match *self {
+            Error::MissingWeights => "missing weights",
+        }
+    }
+}
+
 pub fn calculate_sample_weights(
     task: &str,
     token: &str,
     metric: &Metric,
     db_client: &mongodb::Client,
-) -> Vec<SampleWeight> {
+) -> Result<Vec<SampleWeight>, Error> {
     let db = db_client.db(db::NAME);
 
     let sample_set = get_sample_set(task, &db);
-    let mut weight_matrix = make_weight_matrix(token, metric, &sample_set, &db);
+    let mut weight_matrix = make_weight_matrix(token, metric, &sample_set, &db)?;
     normalize_weight_matrix(&mut weight_matrix, sample_set.num);
     let criteria_weights = calculate_criteria_weights(&weight_matrix, sample_set.num);
 
-    make_sample_weights(&criteria_weights, &sample_set.ids)
+    Ok(make_sample_weights(&criteria_weights, &sample_set.ids))
 }
 
-pub fn print_stats(task: &str, token: &str, metric: &Metric, cfg: &cfg::Db) {
+pub fn print_stats(task: &str, token: &str, metric: &Metric, cfg: &cfg::Db) -> Result<(), Error> {
     let db_client = db::connect(cfg);
     let db = db_client.db(db::NAME);
 
     let sample_set = get_sample_set(task, &db);
     println!("N: {}", sample_set.num);
 
-    let mut weight_matrix = make_weight_matrix(token, metric, &sample_set, &db);
+    let mut weight_matrix = make_weight_matrix(token, metric, &sample_set, &db)?;
     println!("Weight matrix: {}", weight_matrix);
 
     normalize_weight_matrix(&mut weight_matrix, sample_set.num);
@@ -57,6 +78,8 @@ pub fn print_stats(task: &str, token: &str, metric: &Metric, cfg: &cfg::Db) {
     for &SampleWeight { ref name, weight } in &sample_weights {
         println!("{} <= {}", name, weight);
     }
+
+    Ok(())
 }
 
 fn get_sample_set(task: &str, db: &Database) -> SampleSet {
@@ -83,7 +106,7 @@ fn make_weight_matrix(
     metric: &Metric,
     sample_set: &SampleSet,
     db: &Database,
-) -> DMatrix<f32> {
+) -> Result<DMatrix<f32>, Error> {
     let SampleSet { num, ref ids, .. } = *sample_set;
 
     let metric_str = serde_enum::to_string(&metric).unwrap();
@@ -130,24 +153,27 @@ fn make_weight_matrix(
                         }),
                         None,
                     )
-                    .expect("Failed quering DB")
-                    .expect("Missing weight");
+                    .expect("Failed quering DB");
 
-                let weight: Weighting =
-                    from_bson(Bson::from(doc)).expect("Failed deserializing weight");
-                weight_matrix
-                    .columns_mut(col, 1)
-                    .rows_mut(row, 1)
-                    .fill(1.0 / weight.weight);
-                weight_matrix
-                    .columns_mut(row, 1)
-                    .rows_mut(col, 1)
-                    .fill(weight.weight);
+                if let Some(doc) = doc {
+                    let weight: Weighting =
+                        from_bson(Bson::from(doc)).expect("Failed deserializing weight");
+                    weight_matrix
+                        .columns_mut(col, 1)
+                        .rows_mut(row, 1)
+                        .fill(1.0 / weight.weight);
+                    weight_matrix
+                        .columns_mut(row, 1)
+                        .rows_mut(col, 1)
+                        .fill(weight.weight);
+                } else {
+                    return Err(Error::MissingWeights);
+                }
             }
         }
     }
 
-    weight_matrix
+    Ok(weight_matrix)
 }
 
 fn normalize_weight_matrix(weight_matrix: &mut DMatrix<f32>, num: usize) {

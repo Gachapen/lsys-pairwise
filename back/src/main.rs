@@ -34,6 +34,7 @@ use clap::{App, Arg, SubCommand};
 use mongodb::ThreadedClient;
 use mongodb::db::ThreadedDatabase;
 use mongodb::coll::options::FindOptions;
+use std::collections::{HashMap, HashSet};
 
 use cfg::Config;
 use model::{Metric, Weighting};
@@ -117,7 +118,9 @@ fn main() {
         let token = matches.value_of("token").unwrap();
         let metric = serde_enum::from_str(matches.value_of("metric").unwrap()).unwrap();
         let cfg = Config::from_env();
-        stats::print_stats(task, token, &metric, &cfg.db);
+        if let Err(err) = stats::print_stats(task, token, &metric, &cfg.db) {
+            println!("Failed printing stats: {}", err);
+        }
     } else if let Some(matches) = matches.subcommand_matches("save-weights") {
         let task = matches.value_of("task").unwrap();
         let metric = serde_enum::from_str(matches.value_of("metric").unwrap()).unwrap();
@@ -137,43 +140,121 @@ fn save_weights(task: &str, metric: &Metric, cfg: &cfg::Db) {
     let db_client = db::connect(cfg);
     let db = db_client.db(db::NAME);
 
-    let user_docs = db.collection(db::COLLECTION_USER)
-        .find(
-            Some(doc! {
-                "task": task,
-            }),
-            Some(FindOptions {
-                projection: Some(doc! {
-                    "_id": 0,
-                    "token": 1,
+    let pairs: Vec<(String, String)> = {
+        let sample_docs: Vec<_> = db.collection(db::COLLECTION_SAMPLE)
+            .find(
+                Some(doc!{ "task": task }),
+                Some(FindOptions {
+                    projection: Some(doc!{
+                        "_id": 1,
+                    }),
+                    ..Default::default()
                 }),
-                ..Default::default()
-            }),
-        )
-        .expect("Failed querying users");
+            )
+            .unwrap()
+            .collect::<Result<_, _>>()
+            .unwrap();
+        let sample_ids: Vec<String> = sample_docs
+            .into_iter()
+            .map(|doc| {
+                doc.get_object_id("_id")
+                    .expect("Failed deserializing Sample documents")
+                    .to_hex()
+            })
+            .collect();
+        sample_ids
+            .iter()
+            .enumerate()
+            .flat_map(|(i, id_a)| {
+                let id_a = id_a.clone();
+                sample_ids
+                    .iter()
+                    .skip(i + 1)
+                    .map(move |id_b| (id_a.clone(), id_b.clone()))
+            })
+            .collect()
+    };
 
-    let user_tokens: Vec<_> = user_docs
-        .map(|doc| doc.unwrap().get_str("token").unwrap().to_string())
-        .collect();
+    let user_tokens: Vec<String> = {
+        let user_docs = db.collection(db::COLLECTION_USER)
+            .find(
+                Some(doc! {
+                    "task": task,
+                }),
+                Some(FindOptions {
+                    projection: Some(doc! {
+                        "_id": 0,
+                        "token": 1,
+                    }),
+                    ..Default::default()
+                }),
+            )
+            .expect("Failed querying users");
+        user_docs
+            .map(|doc| doc.unwrap().get_str("token").unwrap().to_string())
+            .collect()
+    };
 
-    let weight_docs = db.collection(db::COLLECTION_WEIGHT)
-        .find(
-            Some(doc! {
-                "token": {
-                    "$in": to_bson(&user_tokens).unwrap(),
+    let weights: Vec<Weighting> = {
+        let weight_docs = db.collection(db::COLLECTION_WEIGHT)
+            .find(
+                Some(doc! {
+                    "token": {
+                        "$in": to_bson(&user_tokens).unwrap(),
+                    },
+                    "metric": serde_enum::to_string(metric).unwrap(),
+                }),
+                None,
+            )
+            .expect("Failed quering weights");
+        weight_docs
+            .map(|doc| {
+                let bson = Bson::from(doc.unwrap());
+                let weighting: db::Weighting = from_bson(bson).unwrap();
+                weighting.into()
+            })
+            .collect()
+    };
+
+    let incomplete_users = {
+        // user -> a -> b, and
+        // user -> b -> a
+        let mut user_weighted: HashMap<&str, HashMap<&str, HashSet<&str>>> = HashMap::new();
+        for weight in &weights {
+            user_weighted
+                .entry(&weight.token)
+                .or_insert_with(HashMap::new)
+                .entry(&weight.a)
+                .or_insert_with(HashSet::new)
+                .insert(&weight.b);
+            user_weighted
+                .entry(&weight.token)
+                .or_insert_with(HashMap::new)
+                .entry(&weight.b)
+                .or_insert_with(HashSet::new)
+                .insert(&weight.a);
+        }
+
+        let mut incomplete_users: Vec<String> = Vec::new();
+        for (user, weighted) in &user_weighted {
+            let has_all_weights = pairs.iter().all(
+                |&(ref a, ref b)| match weighted.get(a.as_str()) {
+                    None => false,
+                    Some(paired) => paired.contains(b.as_str()),
                 },
-                "metric": serde_enum::to_string(metric).unwrap(),
-            }),
-            None,
-        )
-        .expect("Failed quering weights");
+            );
 
-    let weights: Vec<Weighting> = weight_docs
-        .map(|doc| {
-            let bson = Bson::from(doc.unwrap());
-            let weighting: db::Weighting = from_bson(bson).unwrap();
-            weighting.into()
-        })
+            if !has_all_weights {
+                incomplete_users.push(user.to_string());
+            }
+        }
+
+        incomplete_users
+    };
+
+    let weights: Vec<Weighting> = weights
+        .into_iter()
+        .filter(|w| !incomplete_users.contains(&w.token))
         .collect();
 
     let mut writer = csv::WriterBuilder::new()
@@ -227,7 +308,10 @@ fn save_criteria_weights(task: &str, metric: &Metric, cfg: &cfg::Db) {
     let weights: Vec<_> = user_tokens
         .into_iter()
         .flat_map(|token| {
-            let weights = stats::calculate_sample_weights(task, &token, metric, &db_client);
+            let weights = match stats::calculate_sample_weights(task, &token, metric, &db_client) {
+                Ok(weights) => weights,
+                Err(_) => Vec::new(),
+            };
             weights.into_iter().map(move |w| {
                 UserWeight {
                     user: token.clone(),

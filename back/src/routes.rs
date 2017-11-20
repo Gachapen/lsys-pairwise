@@ -488,13 +488,13 @@ fn get_criteria_weights(
     db_client: State<mongodb::Client>,
 ) -> Result<Json<Vec<SampleWeight>>, RequestErrorResponse> {
     let task = get_users_task(user, &db_client)?;
+    let weights = stats::calculate_sample_weights(&task, user, &metric, &db_client);
 
-    Ok(Json(stats::calculate_sample_weights(
-        &task,
-        user,
-        &metric,
-        &db_client,
-    )))
+    if let Ok(weights) = weights {
+        Ok(Json(weights))
+    } else {
+        Err(RequestError::not_found("Missing weights").into())
+    }
 }
 
 #[get("/task/<task>/ranking/technical")]
