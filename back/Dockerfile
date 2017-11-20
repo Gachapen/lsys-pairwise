@@ -11,6 +11,6 @@ WORKDIR /data
 ENV RUST_BACKTRACE 1
 ENV ROCKET_ENV production
 
-COPY ./target/release/lsys-pairwise /usr/bin/
+COPY ./target/release/abc /usr/bin/
 
-ENTRYPOINT ["/usr/bin/lsys-pairwise", "server"]
+ENTRYPOINT ["/usr/bin/abc", "server"]

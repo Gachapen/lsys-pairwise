@@ -1,4 +1,25 @@
 [[package]]
+name = "abc"
+version = "0.1.0"
+dependencies = [
+ "bson 0.10.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "chrono 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "clap 2.27.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "csv 1.0.0-beta.5 (registry+https://github.com/rust-lang/crates.io-index)",
+ "mongodb 0.3.7 (registry+https://github.com/rust-lang/crates.io-index)",
+ "nalgebra 0.13.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "rand 0.3.18 (registry+https://github.com/rust-lang/crates.io-index)",
+ "rocket 0.3.3 (registry+https://github.com/rust-lang/crates.io-index)",
+ "rocket_codegen 0.3.3 (registry+https://github.com/rust-lang/crates.io-index)",
+ "rocket_contrib 0.3.3 (registry+https://github.com/rust-lang/crates.io-index)",
+ "rocket_cors 0.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "serde 1.0.20 (registry+https://github.com/rust-lang/crates.io-index)",
+ "serde_derive 1.0.20 (registry+https://github.com/rust-lang/crates.io-index)",
+ "serde_yaml 0.7.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "uuid 0.5.1 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
 name = "advapi32-sys"
 version = "0.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -310,27 +331,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 name = "log"
 version = "0.3.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-
-[[package]]
-name = "lsys-pairwise"
-version = "0.1.0"
-dependencies = [
- "bson 0.10.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "chrono 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "clap 2.27.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "csv 1.0.0-beta.5 (registry+https://github.com/rust-lang/crates.io-index)",
- "mongodb 0.3.7 (registry+https://github.com/rust-lang/crates.io-index)",
- "nalgebra 0.13.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "rand 0.3.18 (registry+https://github.com/rust-lang/crates.io-index)",
- "rocket 0.3.3 (registry+https://github.com/rust-lang/crates.io-index)",
- "rocket_codegen 0.3.3 (registry+https://github.com/rust-lang/crates.io-index)",
- "rocket_contrib 0.3.3 (registry+https://github.com/rust-lang/crates.io-index)",
- "rocket_cors 0.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "serde 1.0.20 (registry+https://github.com/rust-lang/crates.io-index)",
- "serde_derive 1.0.20 (registry+https://github.com/rust-lang/crates.io-index)",
- "serde_yaml 0.7.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "uuid 0.5.1 (registry+https://github.com/rust-lang/crates.io-index)",
-]
 
 [[package]]
 name = "matches"
