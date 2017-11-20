@@ -17,6 +17,7 @@ rand = "^0.3.17"
 clap = "^2.27.0"
 nalgebra = "^0.13.1"
 chrono = { version = "^0.4.0", features = ["serde"] }
+csv = "1.0.0-beta.5"
 
 [dependencies.rocket_contrib]
 version = "^0.3.2"

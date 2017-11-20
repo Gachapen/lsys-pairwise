@@ -84,6 +84,24 @@ impl From<model::Weighting> for Weighting {
     }
 }
 
+impl Into<model::Weighting> for Weighting {
+    fn into(self) -> model::Weighting {
+        if self.video_size < u32::min_value() as i32 {
+            panic!("video_size paramter underflows u32");
+        }
+
+        model::Weighting {
+            token: self.token,
+            fullscreen: self.fullscreen,
+            video_size: self.video_size as u16,
+            metric: self.metric,
+            a: self.a.to_hex(),
+            b: self.b.to_hex(),
+            weight: self.weight,
+        }
+    }
+}
+
 pub fn init(db_client: &mongodb::Client) -> mongodb::Result<()> {
     let db = db_client.db(NAME);
 
