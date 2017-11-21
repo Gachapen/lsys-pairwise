@@ -35,6 +35,7 @@ use mongodb::ThreadedClient;
 use mongodb::db::ThreadedDatabase;
 use mongodb::coll::options::FindOptions;
 use std::collections::{HashMap, HashSet};
+use std::iter::FromIterator;
 
 use cfg::Config;
 use model::{Metric, Weighting};
@@ -175,25 +176,7 @@ fn save_weights(task: &str, metric: &Metric, cfg: &cfg::Db) {
             .collect()
     };
 
-    let user_tokens: Vec<String> = {
-        let user_docs = db.collection(db::COLLECTION_USER)
-            .find(
-                Some(doc! {
-                    "task": task,
-                }),
-                Some(FindOptions {
-                    projection: Some(doc! {
-                        "_id": 0,
-                        "token": 1,
-                    }),
-                    ..Default::default()
-                }),
-            )
-            .expect("Failed querying users");
-        user_docs
-            .map(|doc| doc.unwrap().get_str("token").unwrap().to_string())
-            .collect()
-    };
+    let user_tokens = get_user_tokens(&db_client, task);
 
     let weights: Vec<Weighting> = {
         let weight_docs = db.collection(db::COLLECTION_WEIGHT)
@@ -257,19 +240,25 @@ fn save_weights(task: &str, metric: &Metric, cfg: &cfg::Db) {
         .filter(|w| !incomplete_users.contains(&w.token))
         .collect();
 
+    let sample_names = get_sample_name_map(&db_client, task);
+
     let mut writer = csv::WriterBuilder::new()
         .has_headers(true)
         .from_path("weights.csv")
         .unwrap();
-    writer.write_record(&["user", "a", "b", "weight"]).unwrap();
+    writer
+        .write_record(&["user", "a_id", "a_name", "b_id", "b_name", "weight"])
+        .unwrap();
 
     for weight in weights {
         writer
             .write_record(&[
-                weight.token,
-                weight.a,
-                weight.b,
-                format!("{}", weight.weight),
+                &weight.token,
+                &weight.a,
+                &sample_names[&weight.a],
+                &weight.b,
+                &sample_names[&weight.b],
+                &format!("{}", weight.weight),
             ])
             .unwrap();
     }
@@ -277,45 +266,32 @@ fn save_weights(task: &str, metric: &Metric, cfg: &cfg::Db) {
 
 fn save_criteria_weights(task: &str, metric: &Metric, cfg: &cfg::Db) {
     let db_client = db::connect(cfg);
-    let db = db_client.db(db::NAME);
 
-    let user_docs = db.collection(db::COLLECTION_USER)
-        .find(
-            Some(doc! {
-                "task": task,
-            }),
-            Some(FindOptions {
-                projection: Some(doc! {
-                    "_id": 0,
-                    "token": 1,
-                }),
-                ..Default::default()
-            }),
-        )
-        .expect("Failed querying users");
-
-    let user_tokens: Vec<_> = user_docs
-        .map(|doc| doc.unwrap().get_str("token").unwrap().to_string())
-        .collect();
+    let user_tokens = get_user_tokens(&db_client, task);
+    let sample_names = get_sample_name_map(&db_client, task);
 
     #[derive(Serialize)]
     struct UserWeight {
         user: String,
-        item: String,
+        item_id: String,
+        item_name: String,
         weight: f32,
     }
 
-    let weights: Vec<_> = user_tokens
+    let weights: Vec<UserWeight> = user_tokens
         .into_iter()
         .flat_map(|token| {
             let weights = match stats::calculate_sample_weights(task, &token, metric, &db_client) {
                 Ok(weights) => weights,
                 Err(_) => Vec::new(),
             };
+            let sample_names = &sample_names;
+
             weights.into_iter().map(move |w| {
                 UserWeight {
                     user: token.clone(),
-                    item: w.name,
+                    item_name: sample_names[&w.name].clone(),
+                    item_id: w.name,
                     weight: w.weight,
                 }
             })
@@ -330,4 +306,52 @@ fn save_criteria_weights(task: &str, metric: &Metric, cfg: &cfg::Db) {
     for weight in weights {
         writer.serialize(weight).unwrap();
     }
+}
+
+fn get_sample_name_map(db_client: &mongodb::Client, task: &str) -> HashMap<String, String> {
+    let sample_docs = db_client
+        .db(db::NAME)
+        .collection(db::COLLECTION_SAMPLE)
+        .find(
+            Some(doc! {
+                "task": task,
+            }),
+            Some(FindOptions {
+                projection: Some(doc! {
+                    "_id": 1,
+                    "name": 1,
+                }),
+                ..Default::default()
+            }),
+        )
+        .expect("Failed querying samples");
+
+    HashMap::from_iter(sample_docs.map(|doc| {
+        let doc = doc.unwrap();
+        let id = doc.get_object_id("_id").unwrap().to_hex();
+        let name = doc.get_str("name").unwrap().to_string();
+        (id, name)
+    }))
+}
+
+fn get_user_tokens(db_client: &mongodb::Client, task: &str) -> Vec<String> {
+    let user_docs = db_client
+        .db(db::NAME)
+        .collection(db::COLLECTION_USER)
+        .find(
+            Some(doc! {
+                "task": task,
+            }),
+            Some(FindOptions {
+                projection: Some(doc! {
+                    "_id": 0,
+                    "token": 1,
+                }),
+                ..Default::default()
+            }),
+        )
+        .expect("Failed querying users");
+    user_docs
+        .map(|doc| doc.unwrap().get_str("token").unwrap().to_string())
+        .collect()
 }
