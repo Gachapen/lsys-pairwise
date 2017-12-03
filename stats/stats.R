@@ -5,6 +5,10 @@ gm_mean = function(x) {
 	exp(mean(log(x)))
 }
 
+se = function(x) {
+	var(x) / length(x)
+}
+
 tech_scores <- seq(0.97, 0.27, -(0.97 - 0.27) / 11)
 tech_weights <- tech_scores / sum(tech_scores)
 tech_names <- c("0.97", "0.91", "0.84", "0.78", "0.72", "0.65", "0.59", "0.53", "0.46", "0.40", "0.34", "0.27")
@@ -16,9 +20,12 @@ cw_calculate = function(file) {
 	samples <- unique(df$item_name)
 	users <- unique(df$user)
 
-	mean <- aggregate(x = df[c("weight")], by = list(sample = df$item_name), FUN = gm_mean)
-	mean$norm <- mean$weight / sum(mean$weight)
-	mean <- mean[with(mean, order(-weight)), ]
+	weight_gm <- aggregate(x = df[c("weight")], by = list(sample = df$item_name), FUN = gm_mean)
+	weight_am <- aggregate(x = df[c("weight")], by = list(sample = df$item_name), FUN = mean)
+	weight_se <- aggregate(x = df[c("weight")], by = list(sample = df$item_name), FUN = se)
+	weight_sd <- aggregate(x = df[c("weight")], by = list(sample = df$item_name), FUN = sd)
+	mean <- data.frame(sample = weight_gm$sample, gm = weight_gm$weight, am = weight_am$weight, sd = weight_sd$weight, se = weight_se$weight)
+	mean <- mean[with(mean, order(-gm)), ]
 	mean$rank <- 1:length(samples)
 
 	list(
@@ -58,13 +65,15 @@ cw_stats = function(file) {
 cw_plot_weights = function(file) {
 	cw <- cw_calculate(file)
 
-	print(tech)
+	print(cw$mean)
 
-  ggplot() +
-    # ylim(0, 1) +
-    geom_point(data = cw$df, aes(item_name, weight), size = 0.5, alpha = 0.2, color = "black") +
-    geom_point(data = cw$mean, aes(sample, weight), size = 2.0, alpha = 1.0, color = "blue") +
-    geom_point(data = tech, aes(sample, weight), size = 2.0, alpha = 1.0, color = "red")
+	ggplot() +
+		# ylim(0, 1) +
+		geom_point(data = cw$df, aes(item_name, weight), size = 0.5, alpha = 0.2, color = "black") +
+		geom_point(data = cw$mean, aes(sample, am), size = 2.0, alpha = 1.0, color = "green3") +
+		geom_errorbar(data = cw$mean, mapping = aes(x = sample, ymin = am - sd, ymax = am + sd), width = 0.2, color = "green3") +
+		geom_point(data = cw$mean, aes(sample, gm), size = 2.0, alpha = 1.0, color = "blue3") +
+		geom_point(data = tech, aes(sample, weight), size = 2.0, alpha = 1.0, color = "red3")
 }
 
 cw_plot_aggregate = function(file) {
