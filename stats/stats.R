@@ -1,12 +1,13 @@
 library(ggplot2)
 library(dRank)
+library(reshape)
 
 gm_mean = function(x) {
 	exp(mean(log(x)))
 }
 
 se = function(x) {
-	var(x) / length(x)
+	sd(x)/sqrt(length(x))
 }
 
 tech_scores <- seq(0.97, 0.27, -(0.97 - 0.27) / 11)
@@ -42,8 +43,11 @@ cw_stats = function(file) {
 	cat("Num samples:", length(cw$samples), "\n")
 	cat("Num participants:", length(cw$users), "\n")
 
-	ranking_human <- cw$mean[with(cw$mean, rev(order(sample))), ]$weight
+	ranking_human <- cw$mean[with(cw$mean, rev(order(sample))), ]$gm
 	ranking_code <- tech_weights
+
+	print(cw$mean[cw$mean$sample == '0.97', ]$gm - cw$mean[cw$mean$sample == '0.84', ]$gm)
+	print(cw$mean[cw$mean$sample == '0.46', ]$gm - cw$mean[cw$mean$sample == '0.40', ]$gm)
 
 	print(cor.test(
 		ranking_human,
@@ -65,13 +69,37 @@ cw_stats = function(file) {
 cw_plot_weights = function(file) {
 	cw <- cw_calculate(file)
 
-	print(cw$mean)
+	data <- merge(cw$mean, tech, by = "sample")
+	names(data)[names(data) == 'weight'] <- 'f'
+
+	# weights <- melt(data[, c("sample", "gm", "am", "f")], id = "sample")
+	weights <- melt(data[, c("sample", "gm", "f")], id = "sample")
+	colnames(weights) <- c("sample", "type", "weight")
+
+	sd <- melt(data[, c("sample", "sd")], id = "sample")
+	sd$variable <- NULL
+	colnames(sd) <- c("sample", "sd")
+	sd$type = "gm"
+
+	se <- melt(data[, c("sample", "se")], id = "sample")
+	se$variable <- NULL
+	colnames(se) <- c("sample", "se")
+	se$type = "gm"
+
+	data <- merge(weights, sd, by = c("sample", "type"), all = TRUE)
+	data <- merge(data, se, by = c("sample", "type"), all = TRUE)
+	print(data)
+
+	ggplot(data, aes(shape = type, color = type)) +
+		geom_errorbar(aes(sample, ymin = weight - se, ymax = weight + se), width = 0.2) +
+		geom_point(aes(sample, weight), size = 2.0)
+}
+
+cw_plot_all_weights = function(file) {
+	cw <- cw_calculate(file)
 
 	ggplot() +
-		# ylim(0, 1) +
 		geom_point(data = cw$df, aes(item_name, weight), size = 0.5, alpha = 0.2, color = "black") +
-		geom_point(data = cw$mean, aes(sample, am), size = 2.0, alpha = 1.0, color = "green3") +
-		geom_errorbar(data = cw$mean, mapping = aes(x = sample, ymin = am - sd, ymax = am + sd), width = 0.2, color = "green3") +
 		geom_point(data = cw$mean, aes(sample, gm), size = 2.0, alpha = 1.0, color = "blue3") +
 		geom_point(data = tech, aes(sample, weight), size = 2.0, alpha = 1.0, color = "red3")
 }
@@ -83,7 +111,158 @@ cw_plot_aggregate = function(file) {
 
 	ggplot(
 		data=cw$mean,
-		aes(sample, weight)
+		aes(sample, gm)
 	) +
-		geom_bar(stat="identity")
+		ylab("weight geometric mean") +
+		geom_bar(stat="identity") +
+		geom_errorbar(aes(sample, ymin = gm - se, ymax = gm + se), width = 0.2)
+}
+
+completed_users = function(users) {
+	users[users$complete == "true", ]
+}
+
+user_stats = function(file) {
+	users <- read.csv(file, header = TRUE)
+	total <- nrow(users)
+	users <- completed_users(users)
+
+	completed <- nrow(users)
+	cat(completed, ' of ', total, ' (', completed / total * 100, '%) completed the ranking\n')
+
+	completed_post <- nrow(users[users$post == 'true', ])
+	cat(completed_post, ' of ', completed, ' (', completed_post / completed * 100, '%) completed the post questionnaire\n')
+
+	num_high <- nrow(users[users$education %in% c('bachelor', 'master', 'doctoral'), ])
+	cat('Higher education (>=bachelor): ', num_high / completed * 100, '%\n')
+
+	cat('Males: ', nrow(users[users$gender == 'male', ]) / completed * 100, '%\n')
+	cat('IT: ', nrow(users[users$occupation == 'information_and_communication_technology', ]) / completed * 100, '%\n')
+	cat('Science: ', nrow(users[users$occupation == 'science_and_engineering', ]) / completed * 100, '%\n')
+	cat('Service: ', nrow(users[users$occupation == 'service_and_sales', ]) / completed * 100, '%\n')
+	cat('Age 20-30: ', nrow(users[users$age >= 20 & users$age <= 30, ]) / completed * 100, '%\n')
+	cat('Chrome: ', nrow(users[users$browser.name == 'chrome', ]) / completed * 100, '%\n')
+
+	num_2nd <- nrow(users[users$from != '', ])
+	cat('2nd: ', num_2nd, ' (', num_2nd / completed * 100, '%)\n')
+}
+
+user_gender = function(file) {
+	users <- read.csv(file, header = TRUE)
+	users <- completed_users(users)
+
+	ggplot(
+		data = users,
+		aes(gender, ..count..)
+	) +
+		geom_bar()
+}
+
+user_education = function(file) {
+	users <- read.csv(file, header = TRUE)
+	users <- completed_users(users)
+
+	ggplot(
+		data = users,
+		aes(education, ..count..)
+	) +
+		geom_bar()
+}
+
+user_occupation = function(file) {
+	users <- read.csv(file, header = TRUE)
+	users <- completed_users(users)
+
+	ggplot(
+		data = users,
+		aes(occupation, ..count..)
+	) +
+		geom_bar()
+}
+
+user_age = function(file) {
+	users <- read.csv(file, header = TRUE)
+	users <- completed_users(users)
+
+  mean <- data.frame(label = "mean", val = mean(users$age, na.rm = T))
+  median <- data.frame(label = "median", val = median(users$age, na.rm = T))
+  averages <- rbind(mean, median)
+
+	# ggplot(
+	# 	data = users,
+	# 	aes(age)
+	# ) +
+  #   geom_histogram(aes(y = ..density..), colour="black", fill="white") +
+  #   geom_density(alpha = 0.2, fill = "#FF6666") +
+  #   geom_vline(data = averages, aes(xintercept = val, linetype = label, color = label), show.legend = TRUE)
+
+	ggplot(
+		data = users,
+		aes(age, ..count..)
+	) +
+		geom_bar()
+}
+
+user_browser = function(file) {
+	users <- read.csv(file, header = TRUE)
+	users <- completed_users(users)
+
+	ggplot(
+		data = users,
+		aes(browser.name, ..count..)
+	) +
+		geom_bar()
+}
+
+quest_stats = function(file) {
+	q <- read.csv(file, header = TRUE)
+	cat('Strongly agree: ', nrow(q[q$ranking_agree == 2, ]) / nrow(q) * 100, '%\n')
+}
+
+quest_plant_work = function(file) {
+	q <- read.csv(file, header = TRUE)
+
+	ggplot(
+		data = q,
+		aes(plant_work, ..count..)
+	) +
+		geom_bar() +
+		scale_x_continuous(limits = c(-2.5, 2.5), breaks = seq(from = -2, to = 2, by = 1), labels = c('never', 'rarely', 'occationally', 'frequently', 'very frequently')) +
+		xlab('Frequency of working with plants')
+}
+
+quest_plant_like = function(file) {
+	q <- read.csv(file, header = TRUE)
+
+	ggplot(
+		data = q,
+		aes(plant_like, ..count..)
+	) +
+		geom_bar() +
+		scale_x_continuous(limits = c(-2.5, 2.5), breaks = seq(from = -2, to = 2, by = 1), labels = c('hate', 'dislike', 'neutral', 'like', 'love')) +
+		xlab('Like plants')
+}
+
+quest_video_game = function(file) {
+	q <- read.csv(file, header = TRUE)
+
+	ggplot(
+		data = q,
+		aes(video_game, ..count..)
+	) +
+		geom_bar() +
+		scale_x_continuous(limits = c(-2.5, 2.5), breaks = seq(from = -2, to = 2, by = 1), labels = c('never', 'rarely', 'occationally', 'frequently', 'very frequently')) +
+		xlab('Frequency of playing video games')
+}
+
+quest_agree = function(file) {
+	q <- read.csv(file, header = TRUE)
+
+	ggplot(
+		data = q,
+		aes(ranking_agree, ..count..)
+	) +
+		geom_bar() +
+		scale_x_continuous(limits = c(-2.5, 2.5), breaks = seq(from = -2, to = 2, by = 1), labels = c('strongly disagree', 'disagree', 'neutral', 'agree', 'strongly agree')) +
+		xlab('Agree with fitness ranking')
 }
