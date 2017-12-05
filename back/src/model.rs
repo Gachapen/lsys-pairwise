@@ -36,6 +36,7 @@ pub struct Sample {
     pub fitness: f32,
 }
 
+#[derive(Clone, Copy)]
 pub struct Likert5(i8);
 
 impl Likert5 {
@@ -102,20 +103,20 @@ impl<'de> Deserialize<'de> for Likert5 {
 
 #[derive(Serialize, Deserialize)]
 pub struct PostQuestionnaire {
-    ranking_agree: Likert5,
-    disagree_why: Option<String>,
-    differentiates: Option<String>,
-    comments: Option<String>,
+    pub ranking_agree: Likert5,
+    pub disagree_why: Option<String>,
+    pub differentiates: Option<String>,
+    pub comments: Option<String>,
 }
 
 #[derive(Serialize, Deserialize)]
 pub struct PreQuestionnaire {
-    plant_work: Likert5,
-    plant_like: Likert5,
-    video_game: Likert5,
+    pub plant_work: Likert5,
+    pub plant_like: Likert5,
+    pub video_game: Likert5,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone)]
 pub struct Browser {
     pub name: String,
     pub version: String,
