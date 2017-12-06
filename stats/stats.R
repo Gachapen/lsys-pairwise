@@ -1,6 +1,6 @@
 library(ggplot2)
 library(dRank)
-library(reshape)
+library(reshape2)
 
 gm_mean = function(x) {
 	exp(mean(log(x)))
@@ -117,6 +117,102 @@ cw_plot_aggregate = function(file) {
 		geom_bar(stat="identity") +
 		geom_errorbar(aes(sample, ymin = gm - se, ymax = gm + se), width = 0.2)
 }
+
+cw_plot_fitness = function(cw_file, fitness_file) {
+	cw <- cw_calculate(cw_file)
+	data <- cw$mean
+	names(data)[names(data) == 'gm'] <- 'human'
+	data <- melt(data[, c("sample", "human")], id = "sample")
+	colnames(data) <- c("sample", "evaluation", "weight")
+
+	fitness <- read.csv(fitness_file, header = TRUE, colClasses = c("sample" = "character"))
+	# fitness <- fitness[fitness$evaluation %in% c('default', 'removal2', 'only-balance', 'only-curvature'), ]
+	fitness <- fitness[fitness$evaluation %in% c('default', 'removal'), ]
+	# fitness <- fitness[fitness$evaluation %in% c('default', 'removal', 'only-balance', 'only-curvature', 'only-length', 'only-foliage'), ]
+	# fitness <- fitness[fitness$evaluation %in% c('default', 'only-balance', 'only-branching', 'only-closeness', 'only-curvature', 'only-length', 'only-foliage', 'only-drop'), ]
+	evaluations <- unique(fitness$evaluation)
+	fitness$weight <- NA
+
+	for (evaluation in evaluations) {
+		normalized <- fitness[fitness$evaluation == evaluation, ]
+		normalized$weight <- normalized$fitness / sum(normalized$fitness)
+		normalized$fitness <- NULL
+		fitness[fitness$evaluation == evaluation, ]$weight <- normalized$weight
+	}
+
+	fitness$fitness <- NULL
+	fitness <- fitness[, c('sample', 'evaluation', 'weight')]
+
+	data <- rbind(data, fitness)
+
+	# Order bars by mean weight
+	data <- dcast(data, sample ~ evaluation, value.var = 'weight')
+	data <- data[with(data, order(-human)), ]
+	data$sample <- factor(data$sample, levels = data$sample)
+	data <- melt(data, id = "sample")
+	colnames(data) <- c("sample", "evaluation", "weight")
+
+	data <- transform(data, rank = as.numeric(sample))
+
+	ggplot(
+		data = data,
+		aes(rank, weight)
+	) +
+		ylab("weight") +
+		# geom_bar(aes(fill = evaluation), stat = "identity", position = "dodge")
+		geom_point(aes(color = evaluation)) +
+		# geom_line(aes(color = evaluation))
+		geom_smooth(aes(color = evaluation), se = FALSE, span = 0.45) +
+		scale_x_continuous(breaks = 1:12)
+}
+
+cw_fitness_correlation = function(cw_file, fitness_file) {
+	cw <- cw_calculate(cw_file)
+	data <- cw$mean
+	names(data)[names(data) == 'gm'] <- 'human'
+	data <- melt(data[, c("sample", "human")], id = "sample")
+	colnames(data) <- c("sample", "evaluation", "weight")
+
+	fitness <- read.csv(fitness_file, header = TRUE, colClasses = c("sample" = "character"))
+	evaluations <- unique(fitness$evaluation)
+
+	ranking_human <- cw$mean[with(cw$mean, rev(order(sample))), ]$gm
+
+	tmp <- cw$df[with(cw$df, order(item_name, user)), ]
+	X <- matrix(
+		tmp$weight,
+		nrow = length(cw$users),
+		ncol = length(cw$samples),
+	)
+
+	correlations <- data.frame(metric = evaluations, tau = NA, tau.p = NA, d = NA, d.p = NA)
+
+	for (evaluation in evaluations) {
+		normalized <- fitness[fitness$evaluation == evaluation, ]
+		normalized$weight <- normalized$fitness / sum(normalized$fitness)
+		normalized$fitness <- NULL
+
+		ranking_code <- normalized[with(normalized, rev(order(sample))), ]$weight
+
+		kendall <- cor.test(ranking_human,
+			ranking_code,
+			method = "kendall",
+			alternative = "greater"
+		)
+
+		correlations[correlations$metric == evaluation, ]$tau <- kendall$estimate
+		correlations[correlations$metric == evaluation, ]$tau.p <- kendall$p.value
+
+		y <- sort(ranking_code)
+		drank <- dRank(y, X, B = 100)
+
+		correlations[correlations$metric == evaluation, ]$d <- drank$dist
+		correlations[correlations$metric == evaluation, ]$d.p <- drank$p
+	}
+
+	print(correlations[with(correlations, order(-tau, d)), ])
+}
+
 
 completed_users = function(users) {
 	users[users$complete == "true", ]
