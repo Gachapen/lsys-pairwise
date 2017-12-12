@@ -37,17 +37,24 @@ cw_calculate = function(file) {
 	)
 }
 
-cw_stats = function(file) {
+cw_stats = function(file, file2) {
 	cw <- cw_calculate(file)
 
 	cat("Num samples:", length(cw$samples), "\n")
 	cat("Num participants:", length(cw$users), "\n")
 
 	ranking_human <- cw$mean[with(cw$mean, rev(order(sample))), ]$gm
-	ranking_code <- tech_weights
+	ranking_human <- tail(head(ranking_human, -3), -2)
+	print(ranking_human)
 
-	print(cw$mean[cw$mean$sample == '0.97', ]$gm - cw$mean[cw$mean$sample == '0.84', ]$gm)
-	print(cw$mean[cw$mean$sample == '0.46', ]$gm - cw$mean[cw$mean$sample == '0.40', ]$gm)
+	fitness <- read.csv(file2, header = TRUE, colClasses = c("sample" = "character"))
+	fitness <- fitness[fitness$evaluation == 'removal', ]
+	fitness <- fitness[with(fitness, rev(order(sample))), ]
+
+	# ranking_code <- tech_weights
+	ranking_code <- fitness$fitness / sum(fitness$fitness)
+	ranking_code <- tail(head(ranking_code, -3), -2)
+	print(ranking_code)
 
 	print(cor.test(
 		ranking_human,
